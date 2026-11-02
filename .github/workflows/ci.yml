@@ -1,0 +1,57 @@
+# Runs on pull requests that change what ships or how it is checked. No
+# schedule (owner, 2026-10-31), and a prose-only diff runs nothing.
+name: ci
+
+on:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'build/**'
+      - 'scripts/**'
+      - 'index.html'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'bundle-allowlist.json'
+      - '*.config.ts'
+      - 'tsconfig*.json'
+      - 'env.d.ts'
+      - '.github/workflows/ci.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'build/**'
+      - 'package-lock.json'
+      - 'bundle-allowlist.json'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm test
+      - run: npm run build
+      - run: npm run check:bundle
+      - run: npm run check:doc-numbers
+      - name: conventional commits
+        if: github.event_name == 'pull_request'
+        run: python3 scripts/check-conventional-commit.py range "origin/${{ github.base_ref }}..HEAD"

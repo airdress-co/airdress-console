@@ -1,0 +1,13 @@
+[
+  "@intlify/core-base",
+  "@intlify/message-compiler",
+  "@intlify/shared",
+  "@tanstack/query-core",
+  "@tanstack/vue-query",
+  "@vue/reactivity",
+  "@vue/runtime-core",
+  "@vue/runtime-dom",
+  "@vue/shared",
+  "vue-i18n",
+  "vue-router"
+]

@@ -1,0 +1,18 @@
+{
+  "app": {
+    "title": "Airdress Console",
+    "signOut": "Abmelden"
+  },
+  "connect": {
+    "heading": "Mit deinem Operator verbinden",
+    "lead": "Gib die Adresse deiner Airdress ein. Du meldest dich mit deinem Airdress-Konto an.",
+    "fqdnLabel": "Airdress-Adresse",
+    "fqdnHint": "Zum Beispiel 019e…a.airdr.es",
+    "submit": "Anmelden und verbinden",
+    "invalid": "Gib einen Hostnamen ein, ohne https:// und ohne Pfad."
+  },
+  "callback": {
+    "working": "Du wirst angemeldet …",
+    "failed": "Die Anmeldung wurde nicht abgeschlossen: {code}"
+  }
+}
