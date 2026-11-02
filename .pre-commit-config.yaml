@@ -1,0 +1,47 @@
+# `prek install` installs both stages. Every hook here fails on any finding:
+# there is no warning level in this repository (SPEC-184 design §3.1).
+default_install_hook_types: [pre-commit, commit-msg]
+default_stages: [pre-commit]
+
+repos:
+  - repo: local
+    hooks:
+      - id: typecheck
+        name: vue-tsc (strict templates)
+        entry: npm run --silent typecheck
+        language: system
+        files: \.(ts|vue|json)$
+        pass_filenames: false
+
+      - id: lint
+        name: eslint (type-aware, no warnings)
+        entry: npm run --silent lint
+        language: system
+        files: \.(ts|vue|mjs)$
+        pass_filenames: false
+
+      - id: format
+        name: prettier --check
+        entry: npx --no-install prettier --check
+        language: system
+        types_or: [ts, vue, javascript, json, yaml, markdown, css, html]
+
+      - id: test
+        name: vitest
+        entry: npm run --silent test
+        language: system
+        files: \.(ts|vue|json)$
+        pass_filenames: false
+
+      - id: doc-numbers
+        name: document numbers stay out of code
+        entry: scripts/check-doc-numbers.sh
+        language: system
+        pass_filenames: false
+        always_run: true
+
+      - id: conventional-commit
+        name: conventional commit message
+        entry: scripts/check-conventional-commit.py commit-msg
+        language: system
+        stages: [commit-msg]

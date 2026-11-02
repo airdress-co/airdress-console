@@ -13,8 +13,8 @@ CLI and the VS Code extension.
   authorization server and admits the console's origin in its CORS
   configuration.
 
-Specification: SPEC-182 in `airdress-co/airdress-specs`
-(`airdress-operator/specs/SPEC-182-operator-console/`).
+Specification: SPEC-184 in `airdress-co/airdress-specs`
+(`airdress-operator/specs/SPEC-184-operator-console/`).
 
 ## Development
 

@@ -1,0 +1,49 @@
+import { VueQueryPlugin } from '@tanstack/vue-query';
+import { createApp } from 'vue';
+import { createI18n } from 'vue-i18n';
+import App from './App.vue';
+import { SessionKey, createSession } from './auth/session.ts';
+import { createTokenVault } from './auth/vault.ts';
+import { authConfig } from './config.ts';
+import type { Locale, MessageSchema } from './i18n/index.ts';
+import { messages, preferredLocale } from './i18n/index.ts';
+import { createQueryClient } from './query/client.ts';
+import { createConsoleRouter } from './router.ts';
+
+const queryClient = createQueryClient();
+const session = createSession({
+  config: authConfig(window.location.origin, import.meta.env),
+  vault: createTokenVault(),
+  queryClient,
+  storage: window.sessionStorage,
+  fetch: (input, init) => window.fetch(input, init),
+  navigate: (url) => {
+    window.location.assign(url);
+  },
+});
+const router = createConsoleRouter();
+const i18n = createI18n<[MessageSchema], Locale, false>({
+  // eslint-disable-next-line @typescript-eslint/no-deprecated -- v11 still defaults to the Legacy API; v12 drops the option together with that mode, and this line with it.
+  legacy: false,
+  locale: preferredLocale(navigator.languages),
+  fallbackLocale: 'en',
+  messages,
+});
+
+// The hub redirects to /callback; finish the sign-in there, then drop the
+// code and state from the address bar before the app renders.
+if (window.location.pathname === '/callback') {
+  try {
+    const returnTo = await session.completeSignIn(new URL(window.location.href));
+    window.history.replaceState(null, '', `/#${returnTo}`);
+  } catch {
+    window.history.replaceState(null, '', '/');
+  }
+}
+
+createApp(App)
+  .provide(SessionKey, session)
+  .use(VueQueryPlugin, { queryClient })
+  .use(router)
+  .use(i18n)
+  .mount('#app');
