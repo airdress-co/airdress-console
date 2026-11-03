@@ -3,8 +3,8 @@
 ## Commits and pull requests
 
 - Conventional commits (`feat(auth): …`, `fix(machines): …`); the
-  `commit-msg` hook checks it. release-please reads them to choose the next
-  version and write `CHANGELOG.md`.
+  `commit-msg` hook checks it. `release.yml` reads them to choose the next
+  version and write the GitHub Release (see Releasing).
 - Cite the spec task a commit works on (`184-D.8`) and, when it finishes
   one, add a `Tasks-done: 184-D.8` trailer.
 - Install the hooks once per clone: `prek install`.
@@ -20,23 +20,50 @@ are pinned exactly (`save-exact`) and installed without running scripts.
 
 ## Releasing (deliberate steps, never automatic)
 
-A release is three separate acts, each started by a person:
+Versions follow conventional commits (owner, 2026-11-03). There is one
+mechanism, `.github/workflows/release.yml`, and nothing releases on a merge,
+a tag push or a timer:
 
-1. **Tag.** `vX.Y.Z` on `main` (the release-please pull request, or a tag
-   pushed by hand). A tag builds and deploys nothing.
-2. **Publish.** `just console-publish vX.Y.Z` (in airdress-ops) dispatches
-   `.github/workflows/publish.yml` at the tag. It runs the checks, builds
-   with `CONSOLE_VERSION=X.Y.Z`, and uploads to
+1. **Release.** `gh workflow run release.yml --repo airdress-co/airdress-console --ref main`
+   (or `just console-release` in airdress-ops, which also follows the run).
+   Add `-f dry_run=true` to see the version and notes without changing
+   anything. The workflow, at the dispatched `main` commit:
+   - computes the next version with git-cliff (`cliff.toml`) from the
+     commits since the last `v*` tag: `feat` → minor, `fix` and `perf` →
+     patch, `!` or a `BREAKING CHANGE` footer → major; **while 0.x a
+     breaking change bumps the minor**, so leaving 0.x is a deliberate act.
+     No tag yet → `v0.1.0`;
+   - refuses when nothing releasable landed (`chore`, `docs`, `ci`, `test`,
+     `style`, `refactor`, `build` alone make no release);
+   - tags that commit `vX.Y.Z` (annotated), writes the GitHub Release with
+     git-cliff's notes for exactly those commits, and dispatches
+     `publish.yml` at the tag.
+2. **Publish** (dispatched by step 1; by hand only to re-run a failed one:
+   `just console-publish vX.Y.Z` in airdress-ops). It runs the checks,
+   builds with `CONSOLE_VERSION=X.Y.Z`, and uploads to
    `gs://airdress-console-prod/v/X.Y.Z/`: hashed assets with
    `Cache-Control: public, max-age=31536000, immutable`, the documents with
    `no-cache`, the build's `index.html` last. It refuses a version that
    already exists, and its credential can only create objects under `v/`:
    a published version is never replaced.
-3. **Promote.** `just console-promote next vX.Y.Z` to try it, then
-   `just console-promote stable vX.Y.Z` to make it the default. That writes
-   `channels/<channel>.json` (`{"version":"X.Y.Z"}`, `max-age=60`) and, for
-   `stable`, copies the release's entry document to the bucket root and to
-   `/callback`. Rolling back is the same command with the previous version.
+3. **Promote** (a person, always): `just console-promote next vX.Y.Z` to
+   try it, then `just console-promote stable vX.Y.Z` to make it the
+   default. That writes `channels/<channel>.json`
+   (`{"version":"X.Y.Z"}`, `max-age=60`) and, for `stable`, copies the
+   release's entry document to the bucket root and to `/callback`. Rolling
+   back is the same command with the previous version.
+
+**The version lives in the tag, nowhere else.** No release commit is made to
+`main` (it is protected and no bot writes to it): the build learns its
+version from `CONSOLE_VERSION`, which `publish.yml` sets from the tag, and a
+local build calls itself `0.0.0-dev`. `package.json`'s `version` stays
+`0.0.0` and is never read or shown. **The changelog is the GitHub
+Releases page**; there is no `CHANGELOG.md`.
+
+`scripts/check-release-version.sh` checks the bump rules offline against a
+throwaway repository (CI runs it when `cliff.toml`, the release workflows or
+those scripts change). git-cliff is pinned by version and SHA-512 in
+`scripts/install-git-cliff.sh`.
 
 Every published version stays loadable at `/v/X.Y.Z/`, so a person can open
 an older build while a problem is fixed. Runbook: airdress-ops RB-103.

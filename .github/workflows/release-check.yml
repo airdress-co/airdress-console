@@ -1,0 +1,27 @@
+# The version computation, checked offline (scripts/check-release-version.sh)
+# whenever what decides a release changes. No schedule.
+name: release-check
+
+on:
+  pull_request:
+    paths:
+      - 'cliff.toml'
+      - '.github/workflows/release.yml'
+      - '.github/workflows/release-check.yml'
+      - 'scripts/install-git-cliff.sh'
+      - 'scripts/check-release-version.sh'
+
+permissions:
+  contents: read
+
+jobs:
+  release-version:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - run: |
+          sh scripts/install-git-cliff.sh "$RUNNER_TEMP/bin"
+          PATH="$RUNNER_TEMP/bin:$PATH" sh scripts/check-release-version.sh
