@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { Session } from '@/auth/session.ts';
 import { HttpError, StepUpRequiredError } from './errors.ts';
-import { operatorRequest, readErrorBody } from './http.ts';
+import { operatorRequest, readChallenge, readErrorBody } from './http.ts';
 
 function fakeSession(): Session & { refreshes: number } {
   const s = {
@@ -46,6 +46,41 @@ describe('readErrorBody', () => {
   });
 });
 
+describe('readChallenge (fallback when the header is exposed)', () => {
+  it('reads an RFC 9470 challenge', () => {
+    expect(readChallenge('Bearer error="insufficient_user_authentication", max_age=300')).toEqual({
+      code: 'insufficient_user_authentication',
+      message: undefined,
+      maxAge: 300,
+    });
+  });
+
+  it('ignores anything that is not a Bearer challenge', () => {
+    expect(readChallenge(null).code).toBeUndefined();
+    expect(readChallenge('Basic realm="x"').code).toBeUndefined();
+  });
+
+  it('is used when the body says nothing', async () => {
+    const fetch = respond(
+      new Response('', {
+        status: 401,
+        headers: {
+          'www-authenticate': 'Bearer error="insufficient_user_authentication", max_age=60',
+        },
+      }),
+    );
+    const error: unknown = await operatorRequest(
+      fakeSession(),
+      fetch,
+      'https://op.example',
+      '/v1/x',
+      { method: 'DELETE' },
+    ).catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(StepUpRequiredError);
+    expect((error as StepUpRequiredError).maxAge).toBe(60);
+  });
+});
+
 describe('operatorRequest', () => {
   it('turns a step-up refusal into StepUpRequiredError without refreshing', async () => {
     const session = fakeSession();
@@ -55,7 +90,7 @@ describe('operatorRequest', () => {
         { status: 401, headers: { 'x-request-id': 'r-1' } },
       ),
     );
-    const error: unknown = await operatorRequest(session, fetch, 'op.example', '/v1/x', {
+    const error: unknown = await operatorRequest(session, fetch, 'https://op.example', '/v1/x', {
       method: 'DELETE',
     }).catch((e: unknown) => e);
     expect(error).toBeInstanceOf(StepUpRequiredError);
@@ -68,7 +103,7 @@ describe('operatorRequest', () => {
   it('refreshes once on a plain 401 and retries', async () => {
     const session = fakeSession();
     const fetch = respond(new Response(null, { status: 401 }), Response.json({ ok: true }));
-    await expect(operatorRequest(session, fetch, 'op.example', '/v1/x')).resolves.toEqual({
+    await expect(operatorRequest(session, fetch, 'https://op.example', '/v1/x')).resolves.toEqual({
       ok: true,
     });
     expect(session.refreshes).toBe(1);
@@ -77,7 +112,7 @@ describe('operatorRequest', () => {
   it('returns undefined for 204 and an empty body', async () => {
     const fetch = respond(new Response(null, { status: 204 }));
     await expect(
-      operatorRequest(fakeSession(), fetch, 'op.example', '/v1/x'),
+      operatorRequest(fakeSession(), fetch, 'https://op.example', '/v1/x'),
     ).resolves.toBeUndefined();
   });
 
@@ -88,9 +123,12 @@ describe('operatorRequest', () => {
         { status: 403, headers: { 'x-request-id': 'r-2' } },
       ),
     );
-    const error: unknown = await operatorRequest(fakeSession(), fetch, 'op.example', '/v1/x').catch(
-      (e: unknown) => e,
-    );
+    const error: unknown = await operatorRequest(
+      fakeSession(),
+      fetch,
+      'https://op.example',
+      '/v1/x',
+    ).catch((e: unknown) => e);
     expect(error).toBeInstanceOf(HttpError);
     expect(error).toMatchObject({ status: 403, code: 'not_owner', requestId: 'r-2' });
   });

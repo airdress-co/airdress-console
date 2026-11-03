@@ -39,12 +39,34 @@ export function readErrorBody(body: unknown): ErrorBody {
   return none;
 }
 
+/**
+ * RFC 9470 puts the step-up challenge in `WWW-Authenticate`. The operator
+ * does not expose that header to CORS today (only `x-request-id`), so the
+ * body is what the console reads; the header is a fallback for an operator
+ * that does expose it.
+ */
+export function readChallenge(header: string | null): ErrorBody {
+  const none: ErrorBody = { code: undefined, message: undefined, maxAge: undefined };
+  if (header === null || !/^\s*Bearer\b/i.test(header)) return none;
+  const error = /\berror="([^"]*)"/.exec(header)?.[1];
+  const maxAge = /\bmax_age=("?)(\d+)\1/.exec(header)?.[2];
+  const description = /\berror_description="([^"]*)"/.exec(header)?.[1];
+  return {
+    code: error,
+    message: description,
+    maxAge: maxAge === undefined ? undefined : Number(maxAge),
+  };
+}
+
 async function errorBody(response: Response): Promise<ErrorBody> {
+  let fromBody: ErrorBody;
   try {
-    return readErrorBody(await response.json());
+    fromBody = readErrorBody(await response.json());
   } catch {
-    return { code: undefined, message: undefined, maxAge: undefined };
+    fromBody = { code: undefined, message: undefined, maxAge: undefined };
   }
+  if (fromBody.code !== undefined) return fromBody;
+  return readChallenge(response.headers.get('www-authenticate'));
 }
 
 function toHttpError(response: Response, body: ErrorBody): HttpError {
@@ -76,11 +98,11 @@ async function parseOk(response: Response): Promise<unknown> {
 export async function operatorRequest(
   session: Session,
   fetchImpl: Fetch,
-  fqdn: string,
+  origin: string,
   path: string,
   init: RequestInit = {},
 ): Promise<unknown> {
-  const url = `https://${fqdn}${path}`;
+  const url = `${origin}${path}`;
   const send = async (token: string): Promise<Response> => {
     const headers = new Headers(init.headers);
     headers.set('authorization', `Bearer ${token}`);

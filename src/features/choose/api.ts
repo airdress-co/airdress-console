@@ -50,7 +50,7 @@ export function useOwnedAirdresses(
 ): ReturnType<typeof useQuery<readonly OwnedAirdress[]>> {
   const session = useSession();
   const op = useOperator();
-  const hubHost = new URL(authConfig(window.location.origin, import.meta.env).issuer).host;
+  const hubOrigin = new URL(authConfig(window.location.origin, import.meta.env).issuer).origin;
   return useQuery({
     queryKey: ['hub', 'airdresses'] as const,
     queryFn: async () => {
@@ -62,7 +62,7 @@ export function useOwnedAirdresses(
         const body = await operatorRequest(
           session,
           op.fetch,
-          hubHost,
+          hubOrigin,
           `/api/airdresses?${query.toString()}`,
         );
         const read = readOwnedPage(body);

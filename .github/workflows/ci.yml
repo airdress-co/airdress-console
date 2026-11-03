@@ -9,6 +9,8 @@ on:
       - 'entry/**'
       - 'build/**'
       - 'scripts/**'
+      - 'api/**'
+      - 'e2e/**'
       - 'index.html'
       - 'package.json'
       - 'package-lock.json'
@@ -55,6 +57,7 @@ jobs:
       - run: npm run build
       - run: npm run check:bundle
       - run: npm run check:doc-numbers
+      - run: npm run check:api
       - name: conventional commits
         if: github.event_name == 'pull_request'
         run: python3 scripts/check-conventional-commit.py range "origin/${{ github.base_ref }}..HEAD"

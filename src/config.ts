@@ -52,6 +52,15 @@ export function hubApiResource(config: AuthConfig): string {
   return `${config.issuer}/api`;
 }
 
+/**
+ * Where an operator's API is reached: `https://<fqdn>`. Only the end-to-end
+ * harness overrides it (`VITE_E2E_OPERATOR_ORIGIN`, a build-time constant),
+ * to reach its local operator; the resource identifier below never changes.
+ */
+export function operatorOrigin(fqdn: string, env: ImportMetaEnv = import.meta.env): string {
+  return env.VITE_E2E_OPERATOR_ORIGIN ?? `https://${fqdn}`;
+}
+
 /** The RFC 8707 resource for an operator's API. */
 export function operatorResource(fqdn: string): string {
   return `https://${fqdn}/v1`;
