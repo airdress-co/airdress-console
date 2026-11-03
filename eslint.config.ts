@@ -9,7 +9,7 @@ import tseslint from 'typescript-eslint';
 
 export default defineConfig(
   {
-    ignores: ['dist/**', 'build-meta/**', 'node_modules/**', 'coverage/**'],
+    ignores: ['dist/**', 'build-meta/**', 'node_modules/**', 'coverage/**', 'src/api/generated/**'],
   },
   ...tseslint.configs.strictTypeChecked,
   ...tseslint.configs.stylisticTypeChecked,

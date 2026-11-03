@@ -1,44 +1,77 @@
 import type { Session } from '@/auth/session.ts';
-import { HttpError } from './errors.ts';
+import {
+  DEFAULT_STEP_UP_MAX_AGE,
+  HttpError,
+  INSUFFICIENT_USER_AUTHENTICATION,
+  StepUpRequiredError,
+} from './errors.ts';
 
 export type Fetch = (input: string, init: RequestInit) => Promise<Response>;
 
-function errorCode(body: unknown): { code: string | undefined; message: string | undefined } {
-  if (typeof body !== 'object' || body === null || !('error' in body)) {
-    return { code: undefined, message: undefined };
-  }
+interface ErrorBody {
+  readonly code: string | undefined;
+  readonly message: string | undefined;
+  readonly maxAge: number | undefined;
+}
+
+/**
+ * The operator answers errors in two shapes: `{"error": {"code", "message"}}`
+ * on most routes and `{"error": "<code>", "message"}` on a few (subnames,
+ * promote). Both are read here, once.
+ */
+export function readErrorBody(body: unknown): ErrorBody {
+  const none: ErrorBody = { code: undefined, message: undefined, maxAge: undefined };
+  if (typeof body !== 'object' || body === null || !('error' in body)) return none;
   const error = body.error;
-  if (typeof error === 'string') return { code: error, message: undefined };
+  if (typeof error === 'string') {
+    const message =
+      'message' in body && typeof body.message === 'string' ? body.message : undefined;
+    return { code: error, message, maxAge: undefined };
+  }
   if (typeof error === 'object' && error !== null) {
     const code = 'code' in error && typeof error.code === 'string' ? error.code : undefined;
     const message =
       'message' in error && typeof error.message === 'string' ? error.message : undefined;
-    return { code, message };
+    const maxAge =
+      'max_age' in error && typeof error.max_age === 'number' ? error.max_age : undefined;
+    return { code, message, maxAge };
   }
-  return { code: undefined, message: undefined };
+  return none;
 }
 
-async function toHttpError(response: Response): Promise<HttpError> {
-  let body: unknown;
+async function errorBody(response: Response): Promise<ErrorBody> {
   try {
-    body = await response.json();
+    return readErrorBody(await response.json());
   } catch {
-    body = undefined;
+    return { code: undefined, message: undefined, maxAge: undefined };
   }
-  const { code, message } = errorCode(body);
+}
+
+function toHttpError(response: Response, body: ErrorBody): HttpError {
+  const requestId = response.headers.get('x-request-id') ?? undefined;
+  if (response.status === 401 && body.code === INSUFFICIENT_USER_AUTHENTICATION) {
+    return new StepUpRequiredError(body.maxAge ?? DEFAULT_STEP_UP_MAX_AGE, requestId);
+  }
   return new HttpError(
     response.status,
-    code,
-    response.headers.get('x-request-id') ?? undefined,
-    message ??
-      `The operator answered ${String(response.status)}${code === undefined ? '' : ` ${code}`}`,
+    body.code,
+    requestId,
+    body.message ??
+      `The operator answered ${String(response.status)}${body.code === undefined ? '' : ` ${body.code}`}`,
   );
+}
+
+async function parseOk(response: Response): Promise<unknown> {
+  if (response.status === 204) return undefined;
+  const text = await response.text();
+  return text === '' ? undefined : (JSON.parse(text) as unknown);
 }
 
 /**
  * One request to the connected operator. The token is read from the session
  * at call time and placed in a header; it never enters a URL, a query key or
- * the cache. A 401 is answered by one refresh and one retry, no more.
+ * the cache. A 401 is answered by one refresh and one retry, no more, except
+ * a step-up refusal, which no refresh can satisfy (design §6.3).
  */
 export async function operatorRequest(
   session: Session,
@@ -52,17 +85,34 @@ export async function operatorRequest(
     const headers = new Headers(init.headers);
     headers.set('authorization', `Bearer ${token}`);
     headers.set('accept', 'application/json');
+    if (init.body !== undefined && !headers.has('content-type')) {
+      headers.set('content-type', 'application/json');
+    }
     return fetchImpl(url, { ...init, headers, credentials: 'omit', cache: 'no-store' });
   };
 
   const token = await session.bearer();
   if (token === undefined) throw new HttpError(401, 'not_signed_in', undefined, 'Not signed in.');
   let response = await send(token);
-  if (response.status === 401 && (await session.refresh())) {
-    const renewed = await session.bearer();
-    if (renewed !== undefined) response = await send(renewed);
+  if (response.status === 401) {
+    const body = await errorBody(response.clone());
+    if (body.code === INSUFFICIENT_USER_AUTHENTICATION) throw toHttpError(response, body);
+    if (await session.refresh()) {
+      const renewed = await session.bearer();
+      if (renewed !== undefined) response = await send(renewed);
+    }
   }
-  if (!response.ok) throw await toHttpError(response);
-  if (response.status === 204) return undefined;
-  return response.json();
+  if (!response.ok) throw toHttpError(response, await errorBody(response));
+  return parseOk(response);
+}
+
+/** An unauthenticated read (discovery documents, the client config). */
+export async function publicRequest(fetchImpl: Fetch, url: string): Promise<unknown> {
+  const response = await fetchImpl(url, {
+    headers: { accept: 'application/json' },
+    credentials: 'omit',
+    cache: 'no-store',
+  });
+  if (!response.ok) throw toHttpError(response, await errorBody(response));
+  return parseOk(response);
 }

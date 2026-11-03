@@ -2,3 +2,5 @@ dist
 build-meta
 node_modules
 package-lock.json
+src/api/generated
+api/operator-openapi.yaml
