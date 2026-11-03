@@ -18,18 +18,65 @@ token. Add it to `bundle-allowlist.json` in the same pull request, with the
 reason in the description. Development tools are not limited this way, but
 are pinned exactly (`save-exact`) and installed without running scripts.
 
-## Releasing (two deliberate steps)
+## Releasing (deliberate steps, never automatic)
 
-Publishing is never automatic. A release is three separate acts:
+A release is three separate acts, each started by a person:
 
-1. **Tag.** Merge the release-please pull request. That tags `vX.Y.Z` and
-   builds the artifact; it does not deploy anything.
-2. **Publish.** `just console-publish vX.Y.Z` (in airdress-ops) uploads the
-   build to `/v/X.Y.Z/`. It refuses a version that already exists: a
-   published version is immutable.
+1. **Tag.** `vX.Y.Z` on `main` (the release-please pull request, or a tag
+   pushed by hand). A tag builds and deploys nothing.
+2. **Publish.** `just console-publish vX.Y.Z` (in airdress-ops) dispatches
+   `.github/workflows/publish.yml` at the tag. It runs the checks, builds
+   with `CONSOLE_VERSION=X.Y.Z`, and uploads to
+   `gs://airdress-console-prod/v/X.Y.Z/`: hashed assets with
+   `Cache-Control: public, max-age=31536000, immutable`, the documents with
+   `no-cache`, the build's `index.html` last. It refuses a version that
+   already exists, and its credential can only create objects under `v/`:
+   a published version is never replaced.
 3. **Promote.** `just console-promote next vX.Y.Z` to try it, then
-   `just console-promote stable vX.Y.Z` to make it the default. Rolling back
-   is the same command with the previous version.
+   `just console-promote stable vX.Y.Z` to make it the default. That writes
+   `channels/<channel>.json` (`{"version":"X.Y.Z"}`, `max-age=60`) and, for
+   `stable`, copies the release's entry document to the bucket root and to
+   `/callback`. Rolling back is the same command with the previous version.
 
-Every published version stays loadable by its path, so a person can open
-an older build while a problem is fixed.
+Every published version stays loadable at `/v/X.Y.Z/`, so a person can open
+an older build while a problem is fixed. Runbook: airdress-ops RB-103.
+
+## The entry document
+
+`entry/` is a separate, tiny build (`vite.entry.config.ts`, output
+`dist/_entry/`), served at the bucket root and at `/callback`. It is the
+only thing that is not under `/v/`:
+
+- At `/`: reads `?channel=stable|next` (remembered in `localStorage` as
+  `airdress.console.channel`), else the remembered choice, else `stable`;
+  fetches `/channels/<channel>.json` and replaces the location with
+  `/v/<version>/` (keeping the `#` route). A missing or invalid pointer is
+  said on the page, never guessed.
+- At `/callback`: hands the hub's answer to the build that asked (below).
+
+It carries no inline script or style: the console's CSP (airdress-ops
+`console.tf`) admits same-origin files only.
+
+## The callback contract
+
+The hub redirects every sign-in to the one registered address,
+`https://console.airdress.co/callback`, which the entry document serves.
+Several builds can be live at once, so the answer must reach the build
+that started the sign-in, whose PKCE verifier is in `sessionStorage`:
+
+1. **The build** sends `state = "<version>~<random>"`, its own version
+   (`__CONSOLE_VERSION__`, set at build time) then a tilde then the random
+   value (`src/auth/flow.ts`). Only the random part is secret-like; the
+   whole string is what the build compares at the callback.
+2. **The entry** at `/callback` takes the part before the first `~`,
+   accepts it only if it is semver, and replaces the location with
+   `/v/<version>/?<the hub's query>&oauth=callback`
+   (`entry/route.ts`, `callbackTarget`). Anything else is reported, never
+   routed.
+3. **The build** treats `?oauth=callback` (or the path `/callback` under the
+   dev server) as the callback, finishes the sign-in, and rewrites the
+   address to its own path, `/v/<version>/#<route>` (`src/main.ts`).
+
+`entry/contract.test.ts` holds both halves together. Changing the separator,
+the query flag or the version format is a change to all three places and
+to that test.

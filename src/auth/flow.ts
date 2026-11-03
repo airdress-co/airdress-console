@@ -1,3 +1,4 @@
+import { STATE_SEPARATOR } from '../../entry/route.ts';
 import type { AuthConfig } from '@/config.ts';
 import { endpoints } from '@/config.ts';
 import { challengeFor, randomToken } from './pkce.ts';
@@ -46,7 +47,10 @@ export async function buildAuthorizeUrl(
 ): Promise<string> {
   const pending: PendingSignIn = {
     verifier: randomToken(32),
-    state: randomToken(16),
+    // The version prefix routes the hub's answer back to this build through
+    // the entry document at /callback (CONTRIBUTING.md, "The callback
+    // contract"); the random part is what the callback checks.
+    state: `${__CONSOLE_VERSION__}${STATE_SEPARATOR}${randomToken(16)}`,
     resource: request.resource,
     returnTo: request.returnTo,
   };

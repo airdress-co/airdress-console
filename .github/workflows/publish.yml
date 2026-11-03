@@ -1,0 +1,110 @@
+# Publish one console release to gs://airdress-console-prod/v/<version>/
+# (SPEC-184 design §4, FR-6 and FR-9). Dispatched by a person, never by a tag
+# push and never on a schedule:
+#
+#   just console-publish vX.Y.Z      (airdress-ops), which is
+#   gh workflow run publish.yml --repo airdress-co/airdress-console --ref vX.Y.Z -f tag=vX.Y.Z
+#
+# It runs at the tag because the publisher's WIF binding admits only this
+# workflow at refs/tags/v* (airdress-ops platform/iam.tf, production
+# console.tf). The publisher may only CREATE objects under v/: a published
+# version is never replaced, and moving a channel pointer (the deploy) stays
+# a person's act (`just console-promote`).
+name: publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'The release tag to publish, e.g. v0.1.0 (dispatch with --ref set to the same tag)'
+        required: true
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: publish-${{ inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      TAG: ${{ inputs.tag }}
+      BUCKET: ${{ vars.CONSOLE_BUCKET }}
+    steps:
+      - name: Refuse anything but a release tag, at that tag
+        run: |
+          set -euo pipefail
+          if ! printf '%s' "$TAG" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$'; then
+            echo "::error::tag '$TAG' is not a release tag (vX.Y.Z)"; exit 1
+          fi
+          if [ "$GITHUB_REF" != "refs/tags/$TAG" ]; then
+            echo "::error::dispatched at $GITHUB_REF; run: gh workflow run publish.yml --repo $GITHUB_REPOSITORY --ref $TAG -f tag=$TAG"
+            exit 1
+          fi
+          if [ -z "$BUCKET" ]; then
+            echo "::error::the CONSOLE_BUCKET Actions variable is not set (airdress-ops platform/github.tf)"; exit 1
+          fi
+          echo "VERSION=${TAG#v}" >> "$GITHUB_ENV"
+
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Check and build the release
+        env:
+          CONSOLE_VERSION: ${{ env.VERSION }}
+        run: |
+          set -euo pipefail
+          npm run typecheck
+          npm run lint
+          npm test
+          npm run build
+          npm run check:bundle
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.RELEASE_WIF_PROVIDER }}
+          service_account: ${{ vars.RELEASE_PUBLISHER_SA }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Refuse a version that is already published
+        run: |
+          set -euo pipefail
+          if gcloud storage ls "gs://$BUCKET/v/$VERSION/" >/dev/null 2>&1; then
+            echo "::error::v/$VERSION/ already exists; a published version is immutable. Cut a new version."
+            exit 1
+          fi
+
+      - name: Upload, create-only, index documents last
+        run: |
+          set -euo pipefail
+          dest="gs://$BUCKET/v/$VERSION"
+          # Hashed files: cached for a year, never revalidated.
+          gcloud storage cp --no-clobber --recursive \
+            --cache-control='public, max-age=31536000, immutable' \
+            dist/assets "$dest/"
+          gcloud storage cp --no-clobber --recursive \
+            --cache-control='public, max-age=31536000, immutable' \
+            dist/_entry/assets "$dest/_entry/"
+          # The entry document travels with the release; `just console-promote`
+          # copies it to the bucket root and to /callback.
+          gcloud storage cp --no-clobber --cache-control='no-cache' \
+            dist/_entry/index.html "$dest/_entry/index.html"
+          # Last: the build's own document. Until it exists the version is not
+          # loadable, and promote refuses it.
+          gcloud storage cp --no-clobber --cache-control='no-cache' \
+            dist/index.html "$dest/index.html"
+          echo "published $dest/ — promote with: just console-promote next $TAG" >> "$GITHUB_STEP_SUMMARY"

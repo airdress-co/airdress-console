@@ -1,7 +1,23 @@
+import { readFileSync } from 'node:fs';
 import { fileURLToPath, URL } from 'node:url';
 import vue from '@vitejs/plugin-vue';
 import { defineConfig } from 'vite';
 import { bundlePackages } from './build/bundle-packages.ts';
+
+// The version this build is published as: the release workflow sets it from
+// the tag; a local build says it is a development one. It prefixes the OAuth
+// state so the entry document can return the hub's answer to this build
+// (CONTRIBUTING.md, "The callback contract").
+function consoleVersion(): string {
+  const fromEnv = process.env['CONSOLE_VERSION'];
+  if (fromEnv !== undefined && fromEnv !== '') return fromEnv;
+  const pkg: unknown = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'));
+  const version =
+    typeof pkg === 'object' && pkg !== null && 'version' in pkg && typeof pkg.version === 'string'
+      ? pkg.version
+      : '0.0.0';
+  return `${version}-dev`;
+}
 
 // Every release is served under its own immutable prefix (/v/<semver>/), so
 // asset URLs are relative and the build never assumes where it lives.
@@ -14,6 +30,7 @@ export default defineConfig({
     },
   },
   define: {
+    __CONSOLE_VERSION__: JSON.stringify(consoleVersion()),
     // Composition API only (design §3.2): the Options API is compiled out.
     __VUE_OPTIONS_API__: 'false',
     __VUE_PROD_DEVTOOLS__: 'false',

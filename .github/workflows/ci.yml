@@ -6,6 +6,7 @@ on:
   pull_request:
     paths:
       - 'src/**'
+      - 'entry/**'
       - 'build/**'
       - 'scripts/**'
       - 'index.html'
@@ -16,10 +17,12 @@ on:
       - 'tsconfig*.json'
       - 'env.d.ts'
       - '.github/workflows/ci.yml'
+      - '.github/workflows/publish.yml'
   push:
     branches: [main]
     paths:
       - 'src/**'
+      - 'entry/**'
       - 'build/**'
       - 'package-lock.json'
       - 'bundle-allowlist.json'

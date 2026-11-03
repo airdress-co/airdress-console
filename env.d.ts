@@ -7,6 +7,9 @@ interface ImportMetaEnv {
   readonly VITE_AUTH_CLIENT_ID?: string;
 }
 
+/** The version this build is published as (vite.config.ts). */
+declare const __CONSOLE_VERSION__: string;
+
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
