@@ -34,8 +34,17 @@ function readDevice(r: Reader): Device {
   };
 }
 
+/**
+ * The operator answers `{"enrollments": [...]}`. Its openapi.yaml says
+ * `EnrollmentList {items}`, which no release has sent (found by the
+ * end-to-end suite against v0.1.164); `items` is read only if an operator
+ * ever matches its own document.
+ */
 export function readDevices(body: unknown): readonly Device[] {
-  return R.of('/v1/endpoints/enrollments', body).list('items', readDevice);
+  const r = R.of('/v1/endpoints/enrollments', body);
+  return r.raw('enrollments') === undefined
+    ? r.list('items', readDevice)
+    : r.list('enrollments', readDevice);
 }
 
 export function useDevices(): ReturnType<typeof useQuery<readonly Device[]>> {

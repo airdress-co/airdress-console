@@ -5,7 +5,7 @@ import { RouterLink } from 'vue-router';
 import AreaFrame from '@/components/AreaFrame.vue';
 import ErrorNotice from '@/components/ErrorNotice.vue';
 import type { Resource } from './api.ts';
-import { isEnabled, useFunctions } from './api.ts';
+import { isEnabled, isKindUnknown, useFunctions } from './api.ts';
 
 /** Functions (FR-33): status at a glance; versions, logs and switching on the detail page. */
 const { t } = useI18n();
@@ -29,7 +29,8 @@ function ready(fn: Resource): {
 <template>
   <AreaFrame area="functions">
     <p class="hint">{{ t('functions.lead') }}</p>
-    <ErrorNotice v-if="functions.error.value !== null" :error="functions.error.value" />
+    <p v-if="isKindUnknown(functions.error.value)" class="notice">{{ t('functions.notServed') }}</p>
+    <ErrorNotice v-else-if="functions.error.value !== null" :error="functions.error.value" />
     <p v-else-if="functions.isPending.value">{{ t('common.loading') }}</p>
     <p v-else-if="rows.length === 0">{{ t('functions.none') }}</p>
     <table v-else>

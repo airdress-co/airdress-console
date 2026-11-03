@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query';
 import type { MaybeRefOrGetter } from 'vue';
 import { computed, toValue } from 'vue';
+import { HttpError } from '@/api/errors.ts';
 import type { Json, Reader } from '@/api/guards.ts';
 import { isRecord, Reader as R } from '@/api/guards.ts';
 import { useOperator } from '@/operator/use-operator.ts';
@@ -55,6 +56,19 @@ function readResource(r: Reader): Resource {
 
 export const readResources = (path: string, body: unknown): readonly Resource[] =>
   R.of(path, body).list('items', readResource);
+
+/**
+ * An operator built without functions does not know the kind: `/v1/kinds/
+ * Function` answers `400` with `unknown kind 'Function'`. That is "not on
+ * this operator", not a refusal.
+ */
+export function isKindUnknown(error: unknown): boolean {
+  return (
+    error instanceof HttpError &&
+    error.status === 400 &&
+    (error.code ?? '').startsWith('unknown kind')
+  );
+}
 
 /** `spec.enabled` defaults to true when absent (operator kinds). */
 export function isEnabled(resource: Resource): boolean {

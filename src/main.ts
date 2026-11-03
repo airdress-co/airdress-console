@@ -21,7 +21,6 @@ const session = createSession({
     window.location.assign(url);
   },
 });
-const router = createConsoleRouter();
 const i18n = createI18n<[MessageSchema], Locale, false>({
   // eslint-disable-next-line @typescript-eslint/no-deprecated -- v11 still defaults to the Legacy API; v12 drops the option together with that mode, and this line with it.
   legacy: false,
@@ -46,6 +45,12 @@ if (isCallback) {
     window.history.replaceState(null, '', home);
   }
 }
+
+// Only now: a hash history reads the location when it is created, so a
+// router made before the callback rewrote the URL would navigate to the
+// address bar's old `#/` instead of the route the sign-in returned to
+// (found by the end-to-end suite: sign-in landed on connect, not choose).
+const router = createConsoleRouter();
 
 createApp(App)
   .provide(SessionKey, session)
