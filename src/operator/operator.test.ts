@@ -36,11 +36,25 @@ describe('checkOperator (FR-17)', () => {
     );
   });
 
-  it('says unreachable when no response arrives (network or CORS)', async () => {
+  it('says unreachable when nothing answers at all', async () => {
     const fetch = (): Promise<Response> => Promise.reject(new TypeError('Failed to fetch'));
     await expect(checkOperator(fetch, 'op.example', ISSUER)).rejects.toEqual(
       new ConnectRefusedError('unreachable'),
     );
+  });
+
+  it('says not admitted when the host answers but CORS hides the answer', async () => {
+    const modes: (RequestMode | undefined)[] = [];
+    const fetch = (_url: string, init: RequestInit): Promise<Response> => {
+      modes.push(init.mode);
+      return init.mode === 'no-cors'
+        ? Promise.resolve(new Response(null))
+        : Promise.reject(new TypeError('Failed to fetch'));
+    };
+    await expect(checkOperator(fetch, 'op.example', ISSUER)).rejects.toEqual(
+      new ConnectRefusedError('not_admitted'),
+    );
+    expect(modes).toEqual([undefined, 'no-cors']);
   });
 
   it('reads the operator back out of a resource', () => {
