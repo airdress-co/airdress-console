@@ -30,14 +30,20 @@ const i18n = createI18n<[MessageSchema], Locale, false>({
   messages,
 });
 
-// The hub redirects to /callback; finish the sign-in there, then drop the
-// code and state from the address bar before the app renders.
-if (window.location.pathname === '/callback') {
+// The hub redirects to /callback. Published, the entry document there hands
+// the answer to this build as /v/<version>/?oauth=callback&…; under the dev
+// server /callback reaches the app directly. Finish the sign-in, then drop the
+// code and state from the address bar before the app renders, staying under
+// this build's own path.
+const here = new URL(window.location.href);
+const isCallback = here.pathname === '/callback' || here.searchParams.get('oauth') === 'callback';
+if (isCallback) {
+  const home = here.pathname === '/callback' ? '/' : here.pathname;
   try {
-    const returnTo = await session.completeSignIn(new URL(window.location.href));
-    window.history.replaceState(null, '', `/#${returnTo}`);
+    const returnTo = await session.completeSignIn(here);
+    window.history.replaceState(null, '', `${home}#${returnTo}`);
   } catch {
-    window.history.replaceState(null, '', '/');
+    window.history.replaceState(null, '', home);
   }
 }
 

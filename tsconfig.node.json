@@ -8,6 +8,7 @@
   },
   "include": [
     "vite.config.ts",
+    "vite.entry.config.ts",
     "vitest.config.ts",
     "eslint.config.ts",
     "build/**/*.ts",

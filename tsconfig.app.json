@@ -8,8 +8,8 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.vue", "env.d.ts"],
-  "exclude": ["src/**/*.test.ts", "src/test/**"],
+  "include": ["src/**/*.ts", "src/**/*.vue", "entry/**/*.ts", "env.d.ts"],
+  "exclude": ["src/**/*.test.ts", "src/test/**", "entry/**/*.test.ts"],
   "vueCompilerOptions": {
     "strictTemplates": true,
     "fallthroughAttributes": true
