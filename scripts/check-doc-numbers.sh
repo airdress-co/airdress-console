@@ -26,6 +26,11 @@ TOKEN_RE = re.compile(r"(?i)(?<![a-z0-9])(spec|rdr|rcp)[_-]?[0-9]{3}(?![0-9])")
 CODE_EXT = (".ts", ".mts", ".vue", ".js", ".mjs", ".cjs", ".json", ".yaml",
             ".yml", ".sh", ".html", ".css")
 SKIP = ("package-lock.json",)
+# Contracts of other repositories, copied byte for byte and pinned: the
+# operator openapi.yaml (prose descriptions cite its specs) and the types
+# generated from it. Editing them would break the pin; they are checked by
+# npm run check:api instead.
+VENDORED = ("api/operator-openapi.yaml", "src/api/generated/")
 LINE_COMMENT = ("///", "//", "#", "/*", "*", "<!--")
 TRAILING = re.compile(r"(^|\s)(//|#)(\s|$)")
 
@@ -40,7 +45,7 @@ def code_part(line):
 
 failures = []
 for path in sys.stdin.buffer.read().decode().split("\0"):
-    if not path or is_doc(path):
+    if not path or is_doc(path) or path.startswith(VENDORED):
         continue
     if PATH_RE.search(path):
         failures.append(f"{path}: file name carries a document number")

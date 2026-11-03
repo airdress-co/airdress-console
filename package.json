@@ -19,7 +19,9 @@
     "test": "vitest run",
     "check:bundle": "node scripts/check-bundle.ts",
     "check:doc-numbers": "sh scripts/check-doc-numbers.sh",
-    "check": "npm run typecheck && npm run lint && npm run format:check && npm run test && npm run build && npm run check:bundle && npm run check:doc-numbers"
+    "check": "npm run typecheck && npm run lint && npm run format:check && npm run test && npm run build && npm run check:bundle && npm run check:doc-numbers && npm run check:api",
+    "gen:api": "npx --yes openapi-typescript@7.13.0 api/operator-openapi.yaml -o src/api/generated/operator.d.ts",
+    "check:api": "sh scripts/check-api.sh"
   },
   "dependencies": {
     "@tanstack/vue-query": "5.105.2",
