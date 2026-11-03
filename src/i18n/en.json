@@ -287,7 +287,8 @@
       "promote": "It replaces the running version. If someone else deployed since you loaded this page, nothing changes and you are told who.",
       "disable": "Its route stops answering at the next reconcile. Calls already running finish.",
       "enable": "It starts answering again at the next reconcile."
-    }
+    },
+    "notServed": "This operator does not run functions: it was built without them."
   },
   "choose": {
     "heading": "Choose an airdress",

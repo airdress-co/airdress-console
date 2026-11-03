@@ -287,7 +287,8 @@
       "promote": "Sie ersetzt die laufende Version. Hat jemand anderes seit dem Laden dieser Seite etwas bereitgestellt, ändert sich nichts und du erfährst, wer.",
       "disable": "Ihre Route antwortet ab dem nächsten Abgleich nicht mehr. Bereits laufende Aufrufe laufen zu Ende.",
       "enable": "Sie antwortet ab dem nächsten Abgleich wieder."
-    }
+    },
+    "notServed": "Dieser Operator führt keine Funktionen aus: Er wurde ohne sie gebaut."
   },
   "choose": {
     "heading": "Airdress wählen",

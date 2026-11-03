@@ -42,9 +42,13 @@ async function create(): Promise<void> {
   const displayName = name.value.trim();
   if (displayName === '') return;
   created.value = undefined;
-  await write.mutateAsync({ op: 'create', displayName });
-  created.value = displayName;
-  name.value = '';
+  try {
+    await write.mutateAsync({ op: 'create', displayName });
+    created.value = displayName;
+    name.value = '';
+  } catch {
+    // Shown from `write.error` (a taken name answers 409); the form keeps what was typed.
+  }
 }
 
 function ask(person: SubUser, op: PeopleOp): void {

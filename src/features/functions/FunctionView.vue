@@ -12,6 +12,7 @@ import { useStepUp } from '@/operator/step-up.ts';
 import type { Resource } from './api.ts';
 import {
   isEnabled,
+  isKindUnknown,
   schedulesFiring,
   useFunctionLogs,
   useFunctionVersions,
@@ -156,7 +157,8 @@ async function confirm(): Promise<void> {
       <RouterLink :to="{ name: 'functions' }">← {{ t('functions.all') }}</RouterLink>
     </p>
     <h2 class="mono">{{ name }}</h2>
-    <ErrorNotice v-if="functions.error.value !== null" :error="functions.error.value" />
+    <p v-if="isKindUnknown(functions.error.value)" class="notice">{{ t('functions.notServed') }}</p>
+    <ErrorNotice v-else-if="functions.error.value !== null" :error="functions.error.value" />
     <template v-else-if="fn !== undefined">
       <p>
         {{ t('functions.switch') }}:

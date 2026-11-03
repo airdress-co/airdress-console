@@ -48,11 +48,15 @@ async function add(): Promise<void> {
     rdata: rdata.value.trim(),
     ttl: ttlValue.value,
   };
-  await write.mutateAsync({ op: 'add', subname });
-  added.value = `${subname.label}.${zone.data.value?.zone ?? ''}`;
-  label.value = '';
-  rdata.value = '';
-  ttl.value = '';
+  try {
+    await write.mutateAsync({ op: 'add', subname });
+    added.value = `${subname.label}.${zone.data.value?.zone ?? ''}`;
+    label.value = '';
+    rdata.value = '';
+    ttl.value = '';
+  } catch {
+    // Shown from `write.error`; the form keeps what was typed.
+  }
 }
 
 function ask(s: Subname): void {

@@ -47,9 +47,11 @@ describe('area readers', () => {
     ]);
   });
 
-  it('reads devices from items, with the label from metadata', () => {
+  it('reads devices from enrollments (what v0.1.164 sends), with the label from metadata', () => {
+    expect(readDevices({ enrollments: [] })).toEqual([]);
+    expect(readDevices({ items: [] })).toEqual([]);
     const [d] = readDevices({
-      items: [
+      enrollments: [
         {
           id: 'e1',
           created_at: '2026-11-01T00:00:00Z',
