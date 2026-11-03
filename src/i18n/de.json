@@ -37,6 +37,7 @@
     "invalid": "Gib einen Hostnamen ein, ohne https:// und ohne Pfad.",
     "refused": {
       "unreachable": "Unter dieser Adresse hat niemand geantwortet. Prüfe sie und ob der Operator läuft.",
+      "not_admitted": "Dieser Operator hat geantwortet, lässt die Konsole aber nicht zu. Dafür ist Operator v0.1.164 oder neuer nötig, mit https://console.airdress.co in seinen cors_allowed_origins.",
       "no_metadata": "Dieser Operator nimmt die Konsole noch nicht an. Dafür ist Operator v0.1.164 oder neuer nötig, verbunden mit der Airdress-Anmeldung.",
       "foreign_issuer": "Dieser Operator vertraut einem anderen Anmeldedienst, deshalb sendet die Konsole ihm deine Airdress-Anmeldung nicht.",
       "wrong_resource": "Dieser Operator beschreibt sich unter einer anderen Adresse. Verbinde dich über die Adresse, die er nennt.",
