@@ -1,18 +1,298 @@
 {
   "app": {
-    "title": "Airdress Console",
-    "signOut": "Abmelden"
+    "title": "Airdress-Konsole",
+    "signOut": "Abmelden",
+    "skip": "Zum Inhalt springen",
+    "navLabel": "Bereiche der Konsole",
+    "connectedTo": "Verbundener Operator",
+    "switch": "Airdress wechseln"
+  },
+  "nav": {
+    "overview": "Übersicht",
+    "people": "Personen",
+    "devices": "Geräte",
+    "machines": "Maschinen",
+    "subnames": "DNS-Unternamen",
+    "shells": "Shells",
+    "grants": "Berechtigungen",
+    "functions": "Funktionen"
+  },
+  "common": {
+    "loading": "Wird geladen …",
+    "cancel": "Abbrechen",
+    "choose": "Auswählen …",
+    "actions": "Aktionen",
+    "on": "An",
+    "off": "Aus"
+  },
+  "compat": {
+    "unavailable": "Dieser Operator bietet das noch nicht an. Dafür ist Operator {version} oder neuer nötig."
   },
   "connect": {
-    "heading": "Mit deinem Operator verbinden",
-    "lead": "Gib die Adresse deiner Airdress ein. Du meldest dich mit deinem Airdress-Konto an.",
+    "heading": "Deine Airdress verwalten",
+    "lead": "Melde dich mit deinem Airdress-Konto an und wähle die Airdress, an der du arbeiten willst.",
     "fqdnLabel": "Airdress-Adresse",
     "fqdnHint": "Zum Beispiel 019e…a.airdr.es",
     "submit": "Anmelden und verbinden",
-    "invalid": "Gib einen Hostnamen ein, ohne https:// und ohne Pfad."
+    "invalid": "Gib einen Hostnamen ein, ohne https:// und ohne Pfad.",
+    "refused": {
+      "unreachable": "Unter dieser Adresse hat niemand geantwortet. Prüfe sie und ob der Operator läuft.",
+      "no_metadata": "Dieser Operator nimmt die Konsole noch nicht an. Dafür ist Operator v0.1.164 oder neuer nötig, verbunden mit der Airdress-Anmeldung.",
+      "foreign_issuer": "Dieser Operator vertraut einem anderen Anmeldedienst, deshalb sendet die Konsole ihm deine Airdress-Anmeldung nicht.",
+      "wrong_resource": "Dieser Operator beschreibt sich unter einer anderen Adresse. Verbinde dich über die Adresse, die er nennt.",
+      "no_console_scope": "Dieser Operator nimmt keine Anmeldungen der Konsole an."
+    },
+    "signIn": "Anmelden",
+    "byAddressHeading": "Über die Adresse verbinden",
+    "byAddressLead": "Für einen Operator, den du selbst betreibst, gib seine Adresse ein. Du meldest dich trotzdem mit deinem Airdress-Konto an."
   },
   "callback": {
     "working": "Du wirst angemeldet …",
     "failed": "Die Anmeldung wurde nicht abgeschlossen: {code}"
+  },
+  "stepUp": {
+    "resumed": "Du hast dich neu angemeldet. Bestätige, um abzuschließen, was du begonnen hast.",
+    "resumedForm": "Du hast dich neu angemeldet. Fülle das Formular noch einmal aus, um abzuschließen, was du begonnen hast."
+  },
+  "errors": {
+    "code": "Code: {code}",
+    "requestId": "Anfrage-ID: {id}",
+    "stepUp": "Für diese Änderung brauchst du eine frische Anmeldung. Du wirst zur Anmeldung geleitet …",
+    "unavailable": "Dieser Operator bietet das nicht an.",
+    "signedOut": "Deine Anmeldung ist abgelaufen. Melde dich erneut an, um weiterzumachen.",
+    "operator": "Der Operator hat abgelehnt ({status}): {message}",
+    "unexpected": "Der Operator hat so geantwortet, dass die Konsole es nicht versteht: {detail}",
+    "network": "Der Operator hat nicht geantwortet. Prüfe deine Verbindung und versuche es noch einmal.",
+    "other": "Etwas ist schiefgegangen: {message}",
+    "codes": {
+      "not_owner": "Das kann nur der Inhaber dieser Airdress.",
+      "not_enabled": "Das ist auf dieser Airdress ausgeschaltet.",
+      "insufficient_scope": "Mit dieser Anmeldung geht das nicht. Melde dich ab und wieder an.",
+      "confirmation_mismatch": "Das stimmt nicht mit dem überein, was die Maschine anzeigt. Es wurde nichts genehmigt.",
+      "no_pending_enrollment": "Diese Maschine wartet nicht mehr. Sie wurde vielleicht genehmigt, abgelehnt oder ist abgelaufen.",
+      "enrollment_expired": "Diese Anfrage ist abgelaufen. Die Maschine muss neu beginnen.",
+      "source_signing_kind_required": "Diese Maschine signiert Funktionscode. Gib an, ob ihr Schlüssel ausgetauscht oder kompromittiert wurde.",
+      "source_base_stale": "Jemand anderes hat geändert, was läuft, seit du nachgesehen hast. Lade neu und versuche es noch einmal.",
+      "already_granted": "Diese Berechtigung gibt es schon.",
+      "principal_not_grantable": "Der Inhaber kann keine Berechtigung erhalten: Er darf schon alles.",
+      "principal_revoked": "Diese Person oder Maschine wurde entfernt.",
+      "not_delegated": "Das DNS dieser Airdress ist nicht an ihren Operator delegiert, deshalb kann sie noch keine Unternamen haben.",
+      "duplicate": "Einen Unternamen mit diesem Namen und Typ gibt es schon.",
+      "cname_conflict": "Ein CNAME kann seinen Namen nicht mit einem anderen Eintrag teilen.",
+      "reserved_label": "Dieser Name ist reserviert.",
+      "wildcard_not_allowed": "Platzhalternamen sind nicht erlaubt.",
+      "configured_name": "Dieser Name ist in der Konfiguration des Operators festgelegt.",
+      "invalid_subname": "Dieser Eintrag ist ungültig. Prüfe Name, Typ, Wert und TTL.",
+      "invalid_grant": "Diese Berechtigung ist ungültig. Prüfe Art, Ressource und Aktionen."
+    }
+  },
+  "overview": {
+    "address": "Adresse",
+    "name": "Name",
+    "version": "Operator-Version",
+    "reachability": "Status",
+    "ready": "Erreichbar",
+    "notReady": "Antwortet nicht",
+    "switches": "Schalter",
+    "switchesHint": "Werden von deinem Tarif im Hub gesetzt. Der Operator meldet sie nur.",
+    "switch": {
+      "agentBus": "Agenten-Bus",
+      "agentDevices": "Agenten-Geräte",
+      "mcpLocal": "MCP in deinem Editor",
+      "mcpRemote": "Entferntes MCP"
+    }
+  },
+  "people": {
+    "lead": "Personen, die diese Airdress mit dir teilen. Jede hat eigene Unterhaltungen und Schlüssel.",
+    "nameLabel": "Name",
+    "add": "Person hinzufügen",
+    "created": "{name} wurde hinzugefügt. Ihr Telefon tritt mit einem Kopplungscode aus der Airdress-App oder der CLI bei.",
+    "none": "Noch teilt niemand diese Airdress mit dir.",
+    "name": "Name",
+    "added": "Hinzugefügt",
+    "lastUsed": "Zuletzt aktiv",
+    "block": "Veröffentlichen sperren",
+    "unblock": "Sperre aufheben",
+    "revoke": "Entfernen",
+    "pairingHint": "Die Konsole kann keine Kopplungscodes erstellen: Der Operator gibt sie nur an die App und die CLI aus.",
+    "confirm": {
+      "revoke": "{name} entfernen?",
+      "block": "{name} das Veröffentlichen sperren?",
+      "unblock": "Die Sperre für {name} aufheben?"
+    },
+    "confirmBody": {
+      "revoke": "Ihre Geräte werden bei der nächsten Anfrage abgemeldet, und sie können diese Airdress nicht mehr nutzen.",
+      "block": "Name und Foto werden nicht mehr veröffentlicht. Hebst du die Sperre später auf, werden sie nicht automatisch wieder veröffentlicht.",
+      "unblock": "Sie können ihren Namen und ihr Foto wieder veröffentlichen."
+    },
+    "done": {
+      "revoke": "{name} wurde entfernt.",
+      "block": "{name} kann nicht mehr veröffentlichen.",
+      "unblock": "{name} kann wieder veröffentlichen."
+    }
+  },
+  "devices": {
+    "lead": "Alle Geräte, die diese Airdress nutzen können. Entferne eines, das du verloren hast oder nicht mehr nutzt.",
+    "none": "Noch keine Geräte.",
+    "device": "Gerät",
+    "kind": "Art",
+    "cli": "Kommandozeile",
+    "lastSeen": "Zuletzt gesehen",
+    "enrolled": "Hinzugefügt",
+    "revoke": "Gerät entfernen",
+    "confirmTitle": "{name} entfernen?",
+    "confirmBody": "Es wird bei der nächsten Anfrage abgemeldet. Um es wieder zu nutzen, kopple es neu.",
+    "revoked": "{name} wurde entfernt."
+  },
+  "machines": {
+    "waiting": "Wartet auf Genehmigung",
+    "noneWaiting": "Keine Maschine wartet.",
+    "approved": "Genehmigte Maschinen",
+    "none": "Noch keine Maschinen.",
+    "keys": "Vorab-Schlüssel",
+    "noKeys": "Keine Vorab-Schlüssel.",
+    "machine": "Maschine",
+    "userCode": "Code",
+    "purpose": "Zweck",
+    "expires": "Läuft ab",
+    "approvedAt": "Genehmigt",
+    "authorizationUntil": "Genehmigt bis",
+    "noExpiry": "Ohne Ablauf",
+    "revokedState": "Entfernt",
+    "key": "Schlüssel",
+    "keyState": "Zustand",
+    "keyUses": "Verwendungen",
+    "kind": {
+      "new": "Neue Maschine",
+      "reauth": "Erneuert ihre Genehmigung"
+    },
+    "approve": "Genehmigen",
+    "deny": "Ablehnen",
+    "revoke": "Entfernen",
+    "approveWarning": "Genehmige nur eine Maschine, die du selbst gestartet hast. Wer dir einen Link schickt, kann auch eine starten.",
+    "proofLabel": "Was die Maschine anzeigt",
+    "proofHint": "Gib den Fingerabdruck (SHA256:…) oder den Bestätigungscode ein, den die Maschine ausgegeben hat. Er wird hier absichtlich nicht angezeigt.",
+    "reasonLabel": "Warum entfernst du sie?",
+    "sourceSigningHint": "Diese Maschine signiert Funktionscode. Wähle, was mit ihrem Schlüssel passiert ist: Von ihr signierte Versionen laufen nach einem Austausch weiter und werden nach einer Kompromittierung gestoppt.",
+    "sourceSigningLabel": "Ihr Schlüssel wurde",
+    "rotated": "ausgetauscht (absichtlich ersetzt)",
+    "compromised": "kompromittiert (jemand anderes hat ihn vielleicht)",
+    "confirm": {
+      "approve": "{name} genehmigen?",
+      "deny": "{name} ablehnen?",
+      "revoke": "{name} entfernen?",
+      "revoke-key": "Schlüssel {name} widerrufen?"
+    },
+    "confirmBody": {
+      "deny": "Die Maschine erhält eine Absage und muss neu beginnen.",
+      "revoke-key": "Maschinen können diesen Schlüssel nicht mehr zum Beitreten nutzen."
+    },
+    "action": {
+      "approve": "Genehmigen",
+      "deny": "Ablehnen",
+      "revoke": "Entfernen",
+      "revoke-key": "Schlüssel widerrufen"
+    },
+    "done": {
+      "approve": "{name} wurde genehmigt.",
+      "deny": "{name} wurde abgelehnt.",
+      "revoke": "{name} wurde entfernt.",
+      "revoke-key": "Schlüssel {name} wurde widerrufen."
+    }
+  },
+  "subnames": {
+    "zone": "Namen unter",
+    "notDelegated": "Das DNS dieser Airdress ist noch nicht an ihren Operator delegiert, deshalb lassen sich keine Unternamen hinzufügen.",
+    "label": "Name",
+    "type": "Typ",
+    "rdata": "Wert",
+    "ttl": "TTL (Sekunden)",
+    "ttlHint": "Leer lassen für den Standardwert.",
+    "add": "Unternamen hinzufügen",
+    "added": "{name} wurde hinzugefügt.",
+    "none": "Noch keine Unternamen.",
+    "name": "Name",
+    "remove": "Entfernen",
+    "confirmTitle": "{name} entfernen?",
+    "confirmBody": "Der Name wird nicht mehr aufgelöst, sobald die Caches ablaufen.",
+    "removed": "{name} wurde entfernt."
+  },
+  "shells": {
+    "off": "Shells sind auf dieser Airdress ausgeschaltet.",
+    "none": "Keine Shell-Hosts verknüpft.",
+    "host": "Host",
+    "state": "Zustand",
+    "connected": "Verbunden",
+    "linked": "Verknüpft, nicht verbunden",
+    "unlinked": "Nicht verknüpft",
+    "disabled": "deaktiviert",
+    "revoke": "Host widerrufen",
+    "confirmTitle": "{name} widerrufen?",
+    "confirmBody": "Sein Kanal wird sofort geschlossen, und kein Gerät kann dort wieder ein Terminal öffnen, bis er neu genehmigt ist.",
+    "revoked": "{name} wurde widerrufen."
+  },
+  "grants": {
+    "lead": "Was Personen und Maschinen auf dieser Airdress über ihre eigenen Dinge hinaus tun dürfen.",
+    "principal": "Wer",
+    "person": "Person: {name}",
+    "machine": "Maschine: {name}",
+    "kind": "Art",
+    "resource": "Ressource",
+    "resourceHint": "Leer lassen für alle Ressourcen dieser Art.",
+    "everyResource": "alle Ressourcen",
+    "actions": "Aktionen",
+    "create": "Erteilen",
+    "revoke": "Widerrufen",
+    "createdBy": "Erteilt von",
+    "none": "Noch keine Berechtigungen.",
+    "confirm": {
+      "create": "Diese Berechtigung erteilen?",
+      "revoke": "Diese Berechtigung widerrufen?"
+    },
+    "done": {
+      "create": "Erteilt: {grant}",
+      "revoke": "Widerrufen: {grant}"
+    }
+  },
+  "functions": {
+    "lead": "Funktionen, die auf dieser Airdress laufen. Schreibe und veröffentliche sie in deinem Editor oder mit der CLI.",
+    "none": "Noch keine Funktionen.",
+    "all": "Alle Funktionen",
+    "name": "Funktion",
+    "state": "Zustand",
+    "switch": "Schalter",
+    "ready": "Bereit",
+    "notReady": "Nicht bereit",
+    "enable": "Einschalten",
+    "disable": "Ausschalten",
+    "firedBy": "Ausgelöst von: {names}",
+    "versions": "Versionen",
+    "version": "Version",
+    "published": "Veröffentlicht",
+    "signer": "Signiert von",
+    "running": "läuft",
+    "quarantined": "in Quarantäne",
+    "promote": "Diese Version ausführen",
+    "promoted": "Jetzt läuft {version}.",
+    "logs": "Protokoll",
+    "noLogs": "Noch keine Protokollzeilen.",
+    "alsoPause": "Auch die Zeitpläne anhalten, die sie auslösen: {names}",
+    "alsoResume": "Auch die hier angehaltenen Zeitpläne fortsetzen: {names}",
+    "confirm": {
+      "promote": "Version {version} von {name} ausführen?",
+      "disable": "{name} ausschalten?",
+      "enable": "{name} einschalten?"
+    },
+    "confirmBody": {
+      "promote": "Sie ersetzt die laufende Version. Hat jemand anderes seit dem Laden dieser Seite etwas bereitgestellt, ändert sich nichts und du erfährst, wer.",
+      "disable": "Ihre Route antwortet ab dem nächsten Abgleich nicht mehr. Bereits laufende Aufrufe laufen zu Ende.",
+      "enable": "Sie antwortet ab dem nächsten Abgleich wieder."
+    }
+  },
+  "choose": {
+    "heading": "Airdress wählen",
+    "lead": "Die Airdresses, die dir gehören. Wenn du eine wählst, bleibst du angemeldet.",
+    "none": "Dir gehört noch keine Airdress.",
+    "byAddress": "Über die Adresse mit einem anderen Operator verbinden"
   }
 }

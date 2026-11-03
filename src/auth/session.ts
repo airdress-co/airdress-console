@@ -3,7 +3,13 @@ import type { InjectionKey, Ref } from 'vue';
 import { inject, readonly, ref } from 'vue';
 import type { AuthConfig } from '@/config.ts';
 import type { FetchLike } from './flow.ts';
-import { buildAuthorizeUrl, completeSignIn, refreshTokens, revokeRefreshToken } from './flow.ts';
+import {
+  SignInError,
+  buildAuthorizeUrl,
+  completeSignIn,
+  refreshTokens,
+  revokeRefreshToken,
+} from './flow.ts';
 import type { TokenVault } from './vault.ts';
 
 /**
@@ -20,6 +26,15 @@ export interface Session {
   bearer(): Promise<string | undefined>;
   /** Renew now; false means the person must sign in again. */
   refresh(): Promise<boolean>;
+  /**
+   * Re-scope the session to another resource of the same grant (the hub API,
+   * or one owned operator's `/v1`), through a refresh. Serialized with every
+   * other refresh: the hub rotates the refresh token, and a second
+   * redemption of a spent one ends the family. Rejects with the hub's
+   * refusal (`invalid_target` for an airdress the person does not own) and
+   * leaves the session as it was; a spent grant ends it.
+   */
+  switchTo(resource: string): Promise<void>;
   signOut(): Promise<void>;
 }
 
@@ -38,6 +53,13 @@ export function createSession(deps: SessionDeps): Session {
   const signedIn = ref(false);
   const resource = ref<string | undefined>(undefined);
   let inflightRefresh: Promise<boolean> | undefined;
+  // Every redemption of the refresh token goes through this chain, one at a time.
+  let chain: Promise<unknown> = Promise.resolve();
+  function serialized<T>(task: () => Promise<T>): Promise<T> {
+    const run = chain.then(task, task);
+    chain = run.catch(() => undefined);
+    return run;
+  }
 
   function end(): void {
     deps.vault.forget();
@@ -66,10 +88,27 @@ export function createSession(deps: SessionDeps): Session {
   function refresh(): Promise<boolean> {
     // One refresh at a time: the hub rotates refresh tokens, and two
     // concurrent redemptions of one would end the family.
-    inflightRefresh ??= doRefresh().finally(() => {
+    inflightRefresh ??= serialized(doRefresh).finally(() => {
       inflightRefresh = undefined;
     });
     return inflightRefresh;
+  }
+
+  function switchTo(target: string): Promise<void> {
+    return serialized(async () => {
+      const refreshToken = deps.vault.refreshToken();
+      if (refreshToken === undefined) throw new SignInError('not_signed_in', 'Not signed in.');
+      try {
+        deps.vault.hold(await refreshTokens(deps.config, refreshToken, target, deps.fetch), target);
+      } catch (error: unknown) {
+        // A spent or revoked grant cannot be renewed for any resource.
+        if (error instanceof SignInError && error.code === 'invalid_grant') end();
+        throw error;
+      }
+      // Cached answers belonged to the previous resource's operator.
+      deps.queryClient.clear();
+      resource.value = target;
+    });
   }
 
   deps.vault.onRefreshDue(() => {
@@ -99,6 +138,7 @@ export function createSession(deps: SessionDeps): Session {
       return (await refresh()) ? deps.vault.accessToken() : undefined;
     },
     refresh,
+    switchTo,
     async signOut() {
       const refreshToken = deps.vault.refreshToken();
       end();

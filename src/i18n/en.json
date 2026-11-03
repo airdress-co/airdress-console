@@ -1,18 +1,298 @@
 {
   "app": {
     "title": "Airdress Console",
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "skip": "Skip to content",
+    "navLabel": "Console areas",
+    "connectedTo": "Connected operator",
+    "switch": "Switch airdress"
+  },
+  "nav": {
+    "overview": "Overview",
+    "people": "People",
+    "devices": "Devices",
+    "machines": "Machines",
+    "subnames": "DNS subnames",
+    "shells": "Shells",
+    "grants": "Grants",
+    "functions": "Functions"
+  },
+  "common": {
+    "loading": "Loading…",
+    "cancel": "Cancel",
+    "choose": "Choose…",
+    "actions": "Actions",
+    "on": "On",
+    "off": "Off"
+  },
+  "compat": {
+    "unavailable": "This operator does not offer this yet. It needs operator {version} or later."
   },
   "connect": {
-    "heading": "Connect to your operator",
-    "lead": "Enter the address of your airdress. You will sign in with your Airdress account.",
+    "heading": "Your airdress, administered",
+    "lead": "Sign in with your Airdress account and choose the airdress to work on.",
     "fqdnLabel": "Airdress address",
     "fqdnHint": "For example 019e…a.airdr.es",
     "submit": "Sign in and connect",
-    "invalid": "Enter a host name, without https:// or a path."
+    "invalid": "Enter a host name, without https:// or a path.",
+    "refused": {
+      "unreachable": "That address did not answer. Check it, and that the operator is running.",
+      "no_metadata": "This operator does not accept the console yet. It needs operator v0.1.164 or later, connected to Airdress sign-in.",
+      "foreign_issuer": "This operator trusts a different sign-in service, so the console will not send it your Airdress sign-in.",
+      "wrong_resource": "This operator describes itself under a different address. Connect using the address it names.",
+      "no_console_scope": "This operator does not accept console sign-ins."
+    },
+    "signIn": "Sign in",
+    "byAddressHeading": "Connect by address",
+    "byAddressLead": "For an operator you run yourself, enter its address. You still sign in with your Airdress account."
   },
   "callback": {
     "working": "Signing you in…",
     "failed": "Sign-in did not complete: {code}"
+  },
+  "stepUp": {
+    "resumed": "You signed in again. Confirm to finish what you started.",
+    "resumedForm": "You signed in again. Fill in the form once more to finish what you started."
+  },
+  "errors": {
+    "code": "Code: {code}",
+    "requestId": "Request ID: {id}",
+    "stepUp": "This change needs a recent sign-in. Taking you to sign in…",
+    "unavailable": "This operator does not offer that.",
+    "signedOut": "Your sign-in has ended. Sign in again to continue.",
+    "operator": "The operator refused ({status}): {message}",
+    "unexpected": "The operator answered in a way the console does not understand: {detail}",
+    "network": "The operator did not answer. Check your connection and try again.",
+    "other": "Something went wrong: {message}",
+    "codes": {
+      "not_owner": "Only the owner of this airdress can do that.",
+      "not_enabled": "This is switched off on this airdress.",
+      "insufficient_scope": "This sign-in cannot do that. Sign out and sign in again.",
+      "confirmation_mismatch": "That does not match what the machine shows. Nothing was approved.",
+      "no_pending_enrollment": "That machine is no longer waiting. It may have been approved, denied or have expired.",
+      "enrollment_expired": "That request expired. The machine has to start again.",
+      "source_signing_kind_required": "This machine signs function code. Say whether its key was rotated or compromised.",
+      "source_base_stale": "Someone else changed what runs since you looked. Reload and try again.",
+      "already_granted": "That grant already exists.",
+      "principal_not_grantable": "The owner cannot be given a grant: the owner can already do everything.",
+      "principal_revoked": "That person or machine has been removed.",
+      "not_delegated": "This airdress's DNS is not delegated to its operator, so it cannot hold subnames yet.",
+      "duplicate": "A subname with that name and type already exists.",
+      "cname_conflict": "A CNAME cannot share its name with another record.",
+      "reserved_label": "That name is reserved.",
+      "wildcard_not_allowed": "Wildcard names are not allowed.",
+      "configured_name": "That name is set by the operator's configuration.",
+      "invalid_subname": "That record is not valid. Check the name, type, value and TTL.",
+      "invalid_grant": "That grant is not valid. Check the kind, resource and actions."
+    }
+  },
+  "overview": {
+    "address": "Address",
+    "name": "Name",
+    "version": "Operator version",
+    "reachability": "Status",
+    "ready": "Serving",
+    "notReady": "Not answering",
+    "switches": "Switches",
+    "switchesHint": "Set by your plan at the hub. The operator only reports them.",
+    "switch": {
+      "agentBus": "Agent bus",
+      "agentDevices": "Agent devices",
+      "mcpLocal": "MCP in your editor",
+      "mcpRemote": "Remote MCP"
+    }
+  },
+  "people": {
+    "lead": "People who share this airdress. Each has their own conversations and keys.",
+    "nameLabel": "Name",
+    "add": "Add person",
+    "created": "{name} was added. Their phone joins with a pairing code from the Airdress app or the CLI.",
+    "none": "Nobody else shares this airdress yet.",
+    "name": "Name",
+    "added": "Added",
+    "lastUsed": "Last active",
+    "block": "Block publishing",
+    "unblock": "Lift block",
+    "revoke": "Remove",
+    "pairingHint": "The console cannot create pairing codes: the operator only issues them to the app and the CLI.",
+    "confirm": {
+      "revoke": "Remove {name}?",
+      "block": "Block {name} from publishing?",
+      "unblock": "Lift {name}'s publishing block?"
+    },
+    "confirmBody": {
+      "revoke": "Their devices are signed out at their next request, and they can no longer use this airdress.",
+      "block": "Their name and photo stop being published. Lifting the block later does not publish them again.",
+      "unblock": "They can choose to publish their name and photo again."
+    },
+    "done": {
+      "revoke": "{name} was removed.",
+      "block": "{name} can no longer publish.",
+      "unblock": "{name} can publish again."
+    }
+  },
+  "devices": {
+    "lead": "Every device that can use this airdress. Remove one you lost or no longer use.",
+    "none": "No devices yet.",
+    "device": "Device",
+    "kind": "Kind",
+    "cli": "Command line",
+    "lastSeen": "Last seen",
+    "enrolled": "Added",
+    "revoke": "Remove device",
+    "confirmTitle": "Remove {name}?",
+    "confirmBody": "It is signed out at its next request. To use it again, pair it again.",
+    "revoked": "{name} was removed."
+  },
+  "machines": {
+    "waiting": "Waiting for approval",
+    "noneWaiting": "No machine is waiting.",
+    "approved": "Approved machines",
+    "none": "No machines yet.",
+    "keys": "Pre-approval keys",
+    "noKeys": "No pre-approval keys.",
+    "machine": "Machine",
+    "userCode": "Code",
+    "purpose": "Purpose",
+    "expires": "Expires",
+    "approvedAt": "Approved",
+    "authorizationUntil": "Approved until",
+    "noExpiry": "No expiry",
+    "revokedState": "Removed",
+    "key": "Key",
+    "keyState": "State",
+    "keyUses": "Uses",
+    "kind": {
+      "new": "New machine",
+      "reauth": "Renewing its approval"
+    },
+    "approve": "Approve",
+    "deny": "Deny",
+    "revoke": "Remove",
+    "approveWarning": "Only approve a machine you started yourself. Someone who sends you a link can start one too.",
+    "proofLabel": "What the machine shows",
+    "proofHint": "Type the fingerprint (SHA256:…) or the confirmation code the machine printed. It is not shown here on purpose.",
+    "reasonLabel": "Why are you removing it?",
+    "sourceSigningHint": "This machine signs function code. Choose what happened to its key: versions it signed keep running after a rotation, and stop after a compromise.",
+    "sourceSigningLabel": "Its key was",
+    "rotated": "Rotated (replaced on purpose)",
+    "compromised": "Compromised (someone else may have it)",
+    "confirm": {
+      "approve": "Approve {name}?",
+      "deny": "Deny {name}?",
+      "revoke": "Remove {name}?",
+      "revoke-key": "Revoke key {name}?"
+    },
+    "confirmBody": {
+      "deny": "The machine is told no and has to start again.",
+      "revoke-key": "Machines can no longer use this key to join."
+    },
+    "action": {
+      "approve": "Approve",
+      "deny": "Deny",
+      "revoke": "Remove",
+      "revoke-key": "Revoke key"
+    },
+    "done": {
+      "approve": "{name} was approved.",
+      "deny": "{name} was denied.",
+      "revoke": "{name} was removed.",
+      "revoke-key": "Key {name} was revoked."
+    }
+  },
+  "subnames": {
+    "zone": "Names under",
+    "notDelegated": "This airdress's DNS is not delegated to its operator yet, so subnames cannot be added.",
+    "label": "Name",
+    "type": "Type",
+    "rdata": "Value",
+    "ttl": "TTL (seconds)",
+    "ttlHint": "Leave empty for the default.",
+    "add": "Add subname",
+    "added": "{name} was added.",
+    "none": "No subnames yet.",
+    "name": "Name",
+    "remove": "Remove",
+    "confirmTitle": "Remove {name}?",
+    "confirmBody": "The name stops resolving once caches expire.",
+    "removed": "{name} was removed."
+  },
+  "shells": {
+    "off": "Shells are switched off on this airdress.",
+    "none": "No shell hosts are linked.",
+    "host": "Host",
+    "state": "State",
+    "connected": "Connected",
+    "linked": "Linked, not connected",
+    "unlinked": "Not linked",
+    "disabled": "disabled",
+    "revoke": "Revoke host",
+    "confirmTitle": "Revoke {name}?",
+    "confirmBody": "Its channel closes now, and no device can open a terminal on it again until it is approved anew.",
+    "revoked": "{name} was revoked."
+  },
+  "grants": {
+    "lead": "What people and machines may do on this airdress, beyond their own things.",
+    "principal": "Who",
+    "person": "Person: {name}",
+    "machine": "Machine: {name}",
+    "kind": "Kind",
+    "resource": "Resource",
+    "resourceHint": "Leave empty for every resource of this kind.",
+    "everyResource": "every resource",
+    "actions": "Actions",
+    "create": "Grant",
+    "revoke": "Revoke",
+    "createdBy": "Granted by",
+    "none": "No grants yet.",
+    "confirm": {
+      "create": "Give this grant?",
+      "revoke": "Revoke this grant?"
+    },
+    "done": {
+      "create": "Granted: {grant}",
+      "revoke": "Revoked: {grant}"
+    }
+  },
+  "functions": {
+    "lead": "Functions running on this airdress. Write and publish them from your editor or the CLI.",
+    "none": "No functions yet.",
+    "all": "All functions",
+    "name": "Function",
+    "state": "State",
+    "switch": "Switch",
+    "ready": "Ready",
+    "notReady": "Not ready",
+    "enable": "Switch on",
+    "disable": "Switch off",
+    "firedBy": "Fired by: {names}",
+    "versions": "Versions",
+    "version": "Version",
+    "published": "Published",
+    "signer": "Signed by",
+    "running": "running",
+    "quarantined": "quarantined",
+    "promote": "Run this version",
+    "promoted": "Now running {version}.",
+    "logs": "Logs",
+    "noLogs": "No log lines yet.",
+    "alsoPause": "Also pause the schedules that fire it: {names}",
+    "alsoResume": "Also resume the schedules paused here: {names}",
+    "confirm": {
+      "promote": "Run version {version} of {name}?",
+      "disable": "Switch {name} off?",
+      "enable": "Switch {name} on?"
+    },
+    "confirmBody": {
+      "promote": "It replaces the running version. If someone else deployed since you loaded this page, nothing changes and you are told who.",
+      "disable": "Its route stops answering at the next reconcile. Calls already running finish.",
+      "enable": "It starts answering again at the next reconcile."
+    }
+  },
+  "choose": {
+    "heading": "Choose an airdress",
+    "lead": "The airdresses you own. Choosing one keeps you signed in.",
+    "none": "You do not own an airdress yet.",
+    "byAddress": "Connect to another operator by address"
   }
 }
