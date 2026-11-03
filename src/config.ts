@@ -42,6 +42,16 @@ export function endpoints(config: AuthConfig): AuthEndpoints {
   };
 }
 
+/**
+ * The hub's own API as an RFC 8707 resource. One console grant covers it and
+ * every operator the person owns (the client has `owned_resources`), so the
+ * console signs in for this, lists the person's airdresses, and re-scopes to
+ * the chosen operator with a refresh (FR-16).
+ */
+export function hubApiResource(config: AuthConfig): string {
+  return `${config.issuer}/api`;
+}
+
 /** The RFC 8707 resource for an operator's API. */
 export function operatorResource(fqdn: string): string {
   return `https://${fqdn}/v1`;
