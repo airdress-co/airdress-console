@@ -2,7 +2,7 @@ import type { Fetch } from '@/api/http.ts';
 import { publicRequest } from '@/api/http.ts';
 import { HttpError, isNetworkFailure } from '@/api/errors.ts';
 import { isRecord } from '@/api/guards.ts';
-import { CONSOLE_SCOPE, operatorResource } from '@/config.ts';
+import { CONSOLE_SCOPE, operatorOrigin, operatorResource } from '@/config.ts';
 
 /** The operator a resource names: `https://<fqdn>/v1` → `<fqdn>`. */
 export function fqdnOf(resource: string | undefined): string | undefined {
@@ -33,7 +33,7 @@ export class ConnectRefusedError extends Error {
 export async function checkOperator(fetchImpl: Fetch, fqdn: string, issuer: string): Promise<void> {
   let doc: unknown;
   try {
-    doc = await publicRequest(fetchImpl, `https://${fqdn}${RESOURCE_METADATA_PATH}`);
+    doc = await publicRequest(fetchImpl, `${operatorOrigin(fqdn)}${RESOURCE_METADATA_PATH}`);
   } catch (error: unknown) {
     if (error instanceof HttpError) throw new ConnectRefusedError('no_metadata');
     if (isNetworkFailure(error)) throw new ConnectRefusedError('unreachable');

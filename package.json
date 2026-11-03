@@ -21,7 +21,9 @@
     "check:doc-numbers": "sh scripts/check-doc-numbers.sh",
     "check": "npm run typecheck && npm run lint && npm run format:check && npm run test && npm run build && npm run check:bundle && npm run check:doc-numbers && npm run check:api",
     "gen:api": "npx --yes openapi-typescript@7.13.0 api/operator-openapi.yaml -o src/api/generated/operator.d.ts",
-    "check:api": "sh scripts/check-api.sh"
+    "check:api": "sh scripts/check-api.sh",
+    "e2e": "playwright test",
+    "e2e:operator": "sh e2e/fetch-operator.sh"
   },
   "dependencies": {
     "@tanstack/vue-query": "5.105.2",
@@ -30,7 +32,9 @@
     "vue-router": "5.4.0"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.14.0",
     "@eslint-community/eslint-plugin-eslint-comments": "4.8.1",
+    "@playwright/test": "1.64.1",
     "@tanstack/vue-query-devtools": "6.3.8",
     "@types/node": "26.6.6",
     "@vitejs/plugin-vue": "6.0.10",

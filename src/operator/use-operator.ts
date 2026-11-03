@@ -8,6 +8,7 @@ import { useSession } from '@/auth/session.ts';
 import type { Area } from '@/compat.ts';
 import { supports } from '@/compat.ts';
 import { operatorKeys } from '@/query/keys.ts';
+import { operatorOrigin } from '@/config.ts';
 import { fqdnOf } from './connection.ts';
 
 /** The fetch the operator calls go through; tests provide their own. */
@@ -18,6 +19,8 @@ export interface OperatorApi {
   readonly fqdn: ComputedRef<string | undefined>;
   /** The connected operator, or a thrown error when none is (guarded routes only). */
   requireFqdn(): string;
+  /** Where the connected operator's API is reached. */
+  origin(): string;
   request(path: string, init?: RequestInit): Promise<unknown>;
   readonly fetch: Fetch;
 }
@@ -38,7 +41,9 @@ export function useOperator(): OperatorApi {
   return {
     fqdn,
     requireFqdn,
-    request: (path, init) => operatorRequest(session, fetchImpl, requireFqdn(), path, init),
+    origin: () => operatorOrigin(requireFqdn()),
+    request: (path, init) =>
+      operatorRequest(session, fetchImpl, operatorOrigin(requireFqdn()), path, init),
     fetch: fetchImpl,
   };
 }
@@ -62,9 +67,7 @@ export function useClientConfig(): ReturnType<typeof useQuery<ClientConfig>> {
   return useQuery({
     queryKey: computed(() => operatorKeys.clientConfig(op.fqdn.value ?? '')),
     queryFn: async () =>
-      readClientConfig(
-        await publicRequest(op.fetch, `https://${op.requireFqdn()}/v1/chat/clients/config`),
-      ),
+      readClientConfig(await publicRequest(op.fetch, `${op.origin()}/v1/chat/clients/config`)),
     enabled: computed(() => op.fqdn.value !== undefined),
     staleTime: 5 * 60_000,
   });

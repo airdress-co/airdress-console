@@ -46,7 +46,8 @@ describe('the cache never holds a token', () => {
 
     await queryClient.query({
       queryKey: operatorKeys.area('op.example', 'machines'),
-      queryFn: () => operatorRequest(session, network.fetch, 'op.example', '/v1/admin/machines'),
+      queryFn: () =>
+        operatorRequest(session, network.fetch, 'https://op.example', '/v1/admin/machines'),
     });
 
     const operatorCall = network.calls.find(

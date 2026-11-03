@@ -38,7 +38,7 @@ export function useReadiness(): ReturnType<typeof useQuery<boolean>> {
     queryKey: computed(() => operatorKeys.health(op.fqdn.value ?? '')),
     // `/readyz` answers plain text, so only the status is read.
     queryFn: async () => {
-      const response = await op.fetch(`https://${op.requireFqdn()}/readyz`, {
+      const response = await op.fetch(`${op.origin()}/readyz`, {
         credentials: 'omit',
         cache: 'no-store',
       });
