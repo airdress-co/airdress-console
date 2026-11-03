@@ -1,6 +1,8 @@
 # End-to-end tests
 
-The console in Chromium, Firefox and WebKit, against a **real
+The console in Chromium, Firefox, WebKit and WebKit as an iPhone
+(`mobile-safari`: Safari on iOS's engine, viewport, touch and user agent;
+SPEC-184 AC-11), against a **real
 airdress-operator** and a stand-in for the hub's OAuth authorization server
 (SPEC-184 184-D.13, and the accessibility audit of 184-D.14).
 
