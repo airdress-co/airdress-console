@@ -1,0 +1,107 @@
+# Cut a console release from main, by conventional commits (owner,
+# 2026-11-03), then hand it to publish.yml. Dispatched by a person:
+#
+#   gh workflow run release.yml --repo airdress-co/airdress-console --ref main
+#   (or `just console-release` in airdress-ops, which also follows the run)
+#
+# It computes the next version with git-cliff (cliff.toml: feat → minor,
+# fix/perf → patch, breaking → major, but → minor while 0.x; no tag yet →
+# v0.1.0), refuses when nothing releasable landed since the last tag, tags the
+# dispatched main commit, writes the GitHub Release from the same commits, and
+# dispatches publish.yml at the new tag. No commit is made to main: the
+# version lives in the tag only (CONSOLE_VERSION), and the notes in the
+# GitHub Release. `dry_run` stops after printing the version and the notes.
+name: release
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Print the next version and its notes, change nothing'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+      DRY_RUN: ${{ inputs.dry_run }}
+    steps:
+      - name: Refuse any ref but main
+        run: |
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "::error::release.yml runs on main only (dispatched at $GITHUB_REF); run: gh workflow run release.yml --repo $GITHUB_REPOSITORY --ref main"
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Install git-cliff (pinned, checksum-verified)
+        run: |
+          sh scripts/install-git-cliff.sh "$RUNNER_TEMP/bin"
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+
+      - name: Compute the next version and its notes
+        run: |
+          set -euo pipefail
+          last="$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || echo none)"
+          next="$(git cliff --bumped-version)"
+          count="$(git cliff --unreleased --strip all | grep -c '^- ' || true)"
+          if [ "$count" = 0 ] || [ "$next" = "$last" ]; then
+            echo "::error::no releasable commits since $last (only feat, fix, perf and breaking changes make a release)"
+            exit 1
+          fi
+          git cliff --unreleased --tag "$next" --strip all > "$RUNNER_TEMP/notes.md"
+          echo "NEXT=$next" >> "$GITHUB_ENV"
+          {
+            echo "## $next (from $last, $count releasable commits)"
+            echo
+            cat "$RUNNER_TEMP/notes.md"
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "next version: $next (last: $last)"
+          cat "$RUNNER_TEMP/notes.md"
+
+      - name: Stop here on a dry run
+        if: env.DRY_RUN == 'true'
+        run: echo 'dry run - no tag, no release, no publish'
+
+      - name: Tag the dispatched commit and write the GitHub Release
+        if: env.DRY_RUN != 'true'
+        run: |
+          set -euo pipefail
+          if git rev-parse -q --verify "refs/tags/$NEXT" >/dev/null; then
+            echo "::error::$NEXT already exists"; exit 1
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git tag -a "$NEXT" -m "airdress-console $NEXT" "$GITHUB_SHA"
+          git push origin "refs/tags/$NEXT"
+          gh release create "$NEXT" --verify-tag --title "$NEXT" --notes-file "$RUNNER_TEMP/notes.md"
+
+      - name: Publish it (dispatch publish.yml at the tag)
+        if: env.DRY_RUN != 'true'
+        run: |
+          set -euo pipefail
+          gh workflow run publish.yml --repo "$GITHUB_REPOSITORY" --ref "$NEXT" -f "tag=$NEXT"
+          for _ in 1 2 3 4 5 6 7 8 9 10 11 12; do
+            url="$(gh run list --repo "$GITHUB_REPOSITORY" --workflow publish.yml --branch "$NEXT" \
+              --event workflow_dispatch --limit 1 --json url --jq '.[0].url // empty')"
+            [ -n "$url" ] && break
+            sleep 5
+          done
+          echo "publish run: ${url:-not listed yet; see the Actions tab}"
+          echo "publish run: ${url:-not listed yet}" >> "$GITHUB_STEP_SUMMARY"
+          echo "then: just console-promote next $NEXT" >> "$GITHUB_STEP_SUMMARY"

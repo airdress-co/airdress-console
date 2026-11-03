@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Refuse a commit message that is not a conventional commit.
 
-release-please reads the history to decide the next version and to write
-CHANGELOG.md, so every commit on main says what kind of change it is:
+release.yml reads the history (git-cliff) to decide the next version and to
+write the GitHub Release, so every commit on main says what kind of change it is:
 
     <type>[(<scope>)][!]: <subject>
 
