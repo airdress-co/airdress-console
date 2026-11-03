@@ -52,6 +52,15 @@ export default defineConfig({
         launchOptions: { env: { ...process.env, ...webkitEnv } },
       },
     },
+    {
+      // Safari on iOS is WebKit with a phone's viewport, touch and user
+      // agent; with no iOS device in the lab, this is AC-11's iOS half.
+      name: 'mobile-safari',
+      use: {
+        ...devices['iPhone 15'],
+        launchOptions: { env: { ...process.env, ...webkitEnv } },
+      },
+    },
   ],
   webServer: {
     // The dev server: it handles /callback directly (CONTRIBUTING.md, "The
