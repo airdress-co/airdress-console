@@ -132,6 +132,16 @@
       "revoke": "{name} was removed.",
       "block": "{name} can no longer publish.",
       "unblock": "{name} can publish again."
+    },
+    "choice": {
+      "title": "How does {name} get an account?",
+      "recommended": "Recommended",
+      "offerBody": "They link an account they sign in with from their first device. If they lose their devices, you can help them get back in.",
+      "offer": "Invite with their own account",
+      "noneBody": "Or add them without an account:",
+      "noneCost1": "You will not be able to help this person get back in if they lose their device.",
+      "noneCost2": "Their first device is trusted without them confirming it was them, and the people they talk to are told so.",
+      "none": "Add without an account"
     }
   },
   "devices": {

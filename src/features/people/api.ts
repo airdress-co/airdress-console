@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query';
 import { computed } from 'vue';
 import type { components } from '@/api/generated/operator';
-import type { Reader } from '@/api/guards.ts';
+import type { Json, Reader } from '@/api/guards.ts';
 import { readArray, Reader as R } from '@/api/guards.ts';
 import { useOperator } from '@/operator/use-operator.ts';
 import { operatorKeys } from '@/query/keys.ts';
@@ -50,8 +50,24 @@ export function readCreatedSubUser(body: unknown): {
   return { id: r.string('id'), displayName: r.string('display_name') };
 }
 
+/**
+ * How a new person gets an account (SPEC-144 FR-71/72, operator v0.1.166+
+ * with the person lane on): `offer` lets them link one from their first
+ * device, `none` adds them without one. Sent only after the operator asked
+ * (`account_choice_required`); an older operator never sees the fields.
+ */
+export type AccountChoice = 'offer' | 'none';
+
+export function createBody(displayName: string, account?: AccountChoice): Json {
+  return {
+    display_name: displayName,
+    ...(account === 'offer' ? { account_offer: true } : {}),
+    ...(account === 'none' ? { without_account: true } : {}),
+  };
+}
+
 export type PeopleWrite =
-  | { readonly op: 'create'; readonly displayName: string }
+  | { readonly op: 'create'; readonly displayName: string; readonly account?: AccountChoice }
   | { readonly op: 'revoke'; readonly id: string }
   | { readonly op: 'block'; readonly id: string }
   | { readonly op: 'unblock'; readonly id: string };
@@ -66,7 +82,7 @@ export function usePeopleWrite(): ReturnType<typeof useMutation<unknown, Error, 
           return readCreatedSubUser(
             await op.request('/v1/admin/sub-users', {
               method: 'POST',
-              body: JSON.stringify({ display_name: write.displayName }),
+              body: JSON.stringify(createBody(write.displayName, write.account)),
             }),
           );
         case 'revoke':

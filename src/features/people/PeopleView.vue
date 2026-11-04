@@ -4,10 +4,11 @@ import { useI18n } from 'vue-i18n';
 import AreaFrame from '@/components/AreaFrame.vue';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import ErrorNotice from '@/components/ErrorNotice.vue';
+import { HttpError } from '@/api/errors.ts';
 import { formatTime } from '@/format.ts';
 import type { PendingAction } from '@/operator/step-up.ts';
 import { useStepUp } from '@/operator/step-up.ts';
-import type { SubUser } from './api.ts';
+import type { AccountChoice, SubUser } from './api.ts';
 import { usePeopleWrite, useSubUsers } from './api.ts';
 
 /**
@@ -25,6 +26,8 @@ const stepUp = useStepUp();
 
 const name = ref('');
 const created = ref<string | undefined>(undefined);
+/** The operator asked how the person gets an account; held until answered. */
+const choosing = ref<string | undefined>(undefined);
 
 const resumed = stepUp.resume('people');
 const target = ref<PendingAction | undefined>(resumed);
@@ -38,16 +41,28 @@ const targetOp = computed<PeopleOp>(() => {
   return op === 'block' || op === 'unblock' ? op : 'revoke';
 });
 
-async function create(): Promise<void> {
-  const displayName = name.value.trim();
+async function create(account?: AccountChoice): Promise<void> {
+  const displayName = choosing.value ?? name.value.trim();
   if (displayName === '') return;
   created.value = undefined;
   try {
-    await write.mutateAsync({ op: 'create', displayName });
+    await write.mutateAsync(
+      account === undefined
+        ? { op: 'create', displayName }
+        : { op: 'create', displayName, account },
+    );
     created.value = displayName;
+    choosing.value = undefined;
     name.value = '';
-  } catch {
-    // Shown from `write.error` (a taken name answers 409); the form keeps what was typed.
+  } catch (error: unknown) {
+    // An operator with the person lane on asks how the person gets an
+    // account; nothing was created, so ask the owner and send it again
+    // with the answer. Anything else is shown from `write.error` (a taken
+    // name answers 409), and the form keeps what was typed.
+    if (error instanceof HttpError && error.code === 'account_choice_required') {
+      choosing.value = displayName;
+      write.reset();
+    }
   }
 }
 
@@ -75,7 +90,7 @@ async function confirm(): Promise<void> {
 <template>
   <AreaFrame area="people">
     <p class="hint">{{ t('people.lead') }}</p>
-    <form class="form" @submit.prevent="create">
+    <form class="form" @submit.prevent="create()">
       <label for="person-name">{{ t('people.nameLabel') }}</label>
       <input id="person-name" v-model="name" type="text" maxlength="80" autocomplete="off" />
       <div class="actions">
@@ -88,6 +103,34 @@ async function confirm(): Promise<void> {
         </button>
       </div>
     </form>
+    <section v-if="choosing !== undefined" class="card" aria-labelledby="account-choice">
+      <h3 id="account-choice">{{ t('people.choice.title', { name: choosing }) }}</h3>
+      <p class="hint">{{ t('people.choice.recommended') }}</p>
+      <p>{{ t('people.choice.offerBody') }}</p>
+      <div class="actions">
+        <button
+          type="button"
+          class="primary"
+          :disabled="write.isPending.value"
+          @click="create('offer')"
+        >
+          {{ t('people.choice.offer') }}
+        </button>
+      </div>
+      <p>{{ t('people.choice.noneBody') }}</p>
+      <ul class="hint">
+        <li>{{ t('people.choice.noneCost1') }}</li>
+        <li>{{ t('people.choice.noneCost2') }}</li>
+      </ul>
+      <div class="actions">
+        <button type="button" :disabled="write.isPending.value" @click="choosing = undefined">
+          {{ t('common.cancel') }}
+        </button>
+        <button type="button" :disabled="write.isPending.value" @click="create('none')">
+          {{ t('people.choice.none') }}
+        </button>
+      </div>
+    </section>
     <p v-if="created !== undefined" class="notice notice-ok" role="status">
       {{ t('people.created', { name: created }) }}
     </p>
