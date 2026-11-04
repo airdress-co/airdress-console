@@ -6,7 +6,10 @@
 // - /oauth/authorize, which consents at once (no person here) and records
 //   the max_age a step-up asked for;
 // - /oauth/token with authorization_code and a ROTATING refresh_token, which
-//   re-scopes to any resource the person owns, keeping auth_time;
+//   re-scopes within the grant, keeping auth_time. As the hub does
+//   (resolve_resources, select_resource): an authorize request that names a
+//   resource is a grant for exactly that one; naming none is the console's
+//   registered "every operator I own plus the hub API";
 // - /oauth/revoke and GET /api/airdresses (the hub-API read the console
 //   lists airdresses with).
 //
@@ -45,6 +48,8 @@ interface Family {
   refresh: string;
   authTime: number;
   readonly grantId: string;
+  /** The one resource the authorize request named, or every owned one. */
+  readonly resources: 'owned' | readonly string[];
 }
 
 const b64url = (data: Buffer | string): string => Buffer.from(data).toString('base64url');
@@ -74,7 +79,7 @@ export async function startFakeAs(opts: FakeAsOptions): Promise<FakeAs> {
   const { privateKey, publicKey } = generateKeyPairSync('ed25519');
   const legacy = generateKeyPairSync('ed25519');
   const kid = 'as-e2e';
-  const codes = new Map<string, { resource: string; authTime: number; family: Family }>();
+  const codes = new Map<string, { authTime: number; family: Family }>();
   const families = new Map<string, Family>();
   const authorizeLog: Record<string, string | null>[] = [];
   const issued: string[] = [];
@@ -107,6 +112,15 @@ export async function startFakeAs(opts: FakeAsOptions): Promise<FakeAs> {
   };
 
   const owned = (resource: string): boolean => resource === hubApi || resource === operatorResource;
+  // The hub's select_resource: the one asked, else the grant's first or the
+  // hub API, and refused unless the grant holds it.
+  const select = (family: Family, asked: string | null): string | undefined => {
+    const wanted =
+      asked ?? (family.resources === 'owned' ? hubApi : (family.resources[0] ?? hubApi));
+    const inGrant =
+      family.resources === 'owned' ? owned(wanted) : family.resources.includes(wanted);
+    return inGrant ? wanted : undefined;
+  };
 
   const send = (
     res: ServerResponse,
@@ -147,9 +161,9 @@ export async function startFakeAs(opts: FakeAsOptions): Promise<FakeAs> {
             scope: q.get('scope'),
             code_challenge_method: q.get('code_challenge_method'),
           });
-          const resource = q.get('resource') ?? '';
+          const resource = q.get('resource');
           const redirect = new URL(q.get('redirect_uri') ?? '');
-          if (!owned(resource)) {
+          if (resource !== null && !owned(resource)) {
             redirect.searchParams.set('error', 'invalid_target');
           } else {
             // A fresh interactive sign-in: auth_time is now.
@@ -157,9 +171,10 @@ export async function startFakeAs(opts: FakeAsOptions): Promise<FakeAs> {
               refresh: '',
               authTime: Math.floor(Date.now() / 1000),
               grantId: randomUUID(),
+              resources: resource === null ? 'owned' : [resource],
             };
             const code = `code-${randomUUID()}`;
-            codes.set(code, { resource, authTime: family.authTime, family });
+            codes.set(code, { authTime: family.authTime, family });
             redirect.searchParams.set('code', code);
           }
           redirect.searchParams.set('state', q.get('state') ?? '');
@@ -174,7 +189,9 @@ export async function startFakeAs(opts: FakeAsOptions): Promise<FakeAs> {
             const entry = codes.get(form.get('code') ?? '');
             codes.delete(form.get('code') ?? '');
             if (entry === undefined) return send(res, 400, { error: 'invalid_grant' });
-            return send(res, 200, mint(entry.family, entry.resource));
+            const resource = select(entry.family, form.get('resource'));
+            if (resource === undefined) return send(res, 400, { error: 'invalid_target' });
+            return send(res, 200, mint(entry.family, resource));
           }
           if (form.get('grant_type') === 'refresh_token') {
             const family = families.get(form.get('refresh_token') ?? '');
@@ -182,8 +199,8 @@ export async function startFakeAs(opts: FakeAsOptions): Promise<FakeAs> {
             if (family?.refresh !== form.get('refresh_token')) {
               return send(res, 400, { error: 'invalid_grant' });
             }
-            const resource = form.get('resource') ?? '';
-            if (!owned(resource)) return send(res, 400, { error: 'invalid_target' });
+            const resource = select(family, form.get('resource'));
+            if (resource === undefined) return send(res, 400, { error: 'invalid_target' });
             families.delete(family.refresh);
             return send(res, 200, mint(family, resource));
           }
