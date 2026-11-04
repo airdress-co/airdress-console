@@ -13,7 +13,7 @@ import {
 import { readGrants } from './grants/api.ts';
 import { proofOf, readMachines, readPendingMachines } from './machines/api.ts';
 import { readCapabilities } from './overview/api.ts';
-import { readSubUsers } from './people/api.ts';
+import { createBody, readSubUsers } from './people/api.ts';
 import { readShellHosts } from './shells/api.ts';
 import { readSubnameZone } from './subnames/api.ts';
 
@@ -231,5 +231,17 @@ describe('machine approval proof', () => {
   it('sends a fingerprint as a fingerprint and anything else as a confirmation code', () => {
     expect(proofOf(' SHA256:abc ')).toEqual({ kind: 'fingerprint', value: 'SHA256:abc' });
     expect(proofOf('123456')).toEqual({ kind: 'confirmation_code', value: '123456' });
+  });
+});
+
+describe('adding a person, old and new operators', () => {
+  it('sends only the name until the operator asks how they get an account', () => {
+    expect(createBody('Dana')).toEqual({ display_name: 'Dana' });
+  });
+
+  // operator v0.1.166 with the person lane on: 422 account_choice_required
+  it('sends exactly one of the two choices once asked', () => {
+    expect(createBody('Dana', 'offer')).toEqual({ display_name: 'Dana', account_offer: true });
+    expect(createBody('Dana', 'none')).toEqual({ display_name: 'Dana', without_account: true });
   });
 });

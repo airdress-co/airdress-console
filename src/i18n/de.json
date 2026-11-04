@@ -132,6 +132,16 @@
       "revoke": "{name} wurde entfernt.",
       "block": "{name} kann nicht mehr veröffentlichen.",
       "unblock": "{name} kann wieder veröffentlichen."
+    },
+    "choice": {
+      "title": "Wie bekommt {name} ein Konto?",
+      "recommended": "Empfohlen",
+      "offerBody": "Die Person verknüpft auf ihrem ersten Gerät ein Konto, mit dem sie sich anmeldet. Verliert sie ihre Geräte, können Sie ihr wieder Zugang verschaffen.",
+      "offer": "Mit eigenem Konto einladen",
+      "noneBody": "Oder ohne Konto hinzufügen:",
+      "noneCost1": "Verliert die Person ihr Gerät, können Sie ihr keinen Zugang mehr verschaffen.",
+      "noneCost2": "Ihr erstes Gerät wird vertraut, ohne dass sie bestätigt, dass sie es war, und ihre Gesprächspartner erfahren das.",
+      "none": "Ohne Konto hinzufügen"
     }
   },
   "devices": {
