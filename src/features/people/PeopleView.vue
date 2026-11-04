@@ -125,12 +125,12 @@ async function confirm(): Promise<void> {
     <p class="hint">{{ t('people.pairingHint') }}</p>
     <ConfirmDialog
       v-model:open="confirming"
+      :resumed="wasResumed ? 'confirm' : 'none'"
       :title="t(`people.confirm.${targetOp}`, { name: target?.label ?? '' })"
       :confirm-label="t(`people.${targetOp}`)"
       :busy="write.isPending.value"
       @confirm="confirm"
     >
-      <p v-if="wasResumed">{{ t('stepUp.resumed') }}</p>
       <p>{{ t(`people.confirmBody.${targetOp}`) }}</p>
     </ConfirmDialog>
   </AreaFrame>

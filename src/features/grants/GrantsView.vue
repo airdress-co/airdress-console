@@ -191,15 +191,13 @@ async function confirm(): Promise<void> {
     </table>
     <ConfirmDialog
       v-model:open="confirming"
+      :resumed="wasResumed ? (targetOp === 'create' ? 'form' : 'confirm') : 'none'"
       :title="t(`grants.confirm.${targetOp}`)"
       :confirm-label="t(`grants.${targetOp}`)"
       :busy="write.isPending.value"
       :confirm-disabled="confirmDisabled"
       @confirm="confirm"
     >
-      <p v-if="wasResumed">
-        {{ t(targetOp === 'create' ? 'stepUp.resumedForm' : 'stepUp.resumed') }}
-      </p>
       <p class="mono">{{ targetOp === 'create' ? summary : target?.label }}</p>
     </ConfirmDialog>
   </AreaFrame>
