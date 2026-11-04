@@ -163,12 +163,12 @@ async function confirm(): Promise<void> {
     </template>
     <ConfirmDialog
       v-model:open="confirming"
+      :resumed="wasResumed ? 'confirm' : 'none'"
       :title="t('subnames.confirmTitle', { name: target?.label ?? '' })"
       :confirm-label="t('subnames.remove')"
       :busy="write.isPending.value"
       @confirm="confirm"
     >
-      <p v-if="wasResumed">{{ t('stepUp.resumed') }}</p>
       <p>{{ t('subnames.confirmBody') }}</p>
     </ConfirmDialog>
   </AreaFrame>

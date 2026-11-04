@@ -232,13 +232,13 @@ async function confirm(): Promise<void> {
 
     <ConfirmDialog
       v-model:open="confirming"
+      :resumed="wasResumed ? 'confirm' : 'none'"
       :title="t(`machines.confirm.${targetOp}`, { name: target?.label ?? '' })"
       :confirm-label="t(`machines.action.${targetOp}`)"
       :busy="write.isPending.value"
       :confirm-disabled="!canConfirm"
       @confirm="confirm"
     >
-      <p v-if="wasResumed">{{ t('stepUp.resumed') }}</p>
       <template v-if="targetOp === 'approve'">
         <p class="notice">{{ t('machines.approveWarning') }}</p>
         <label for="machine-proof">{{ t('machines.proofLabel') }}</label>

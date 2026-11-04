@@ -252,6 +252,7 @@ async function confirm(): Promise<void> {
 
     <ConfirmDialog
       v-model:open="confirming"
+      :resumed="wasResumed ? 'confirm' : 'none'"
       :title="
         t(`functions.confirm.${targetOp}`, {
           name,
@@ -262,7 +263,6 @@ async function confirm(): Promise<void> {
       :busy="write.isPending.value"
       @confirm="confirm"
     >
-      <p v-if="wasResumed">{{ t('stepUp.resumed') }}</p>
       <p>{{ t(`functions.confirmBody.${targetOp}`) }}</p>
       <label v-if="targetOp !== 'promote' && offered.length > 0">
         <input v-model="alsoSchedules" type="checkbox" />

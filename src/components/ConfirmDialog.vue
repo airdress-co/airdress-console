@@ -8,9 +8,20 @@ import { freshSignInLikely } from '@/operator/step-up.ts';
  * Every destructive action asks first, naming the thing (FR-37). A native
  * <dialog>: focus is trapped and Escape cancels without code of our own.
  */
-const { title, confirmLabel, busy, confirmDisabled } = defineProps<{
+const {
+  title,
+  confirmLabel,
+  busy,
+  confirmDisabled,
+  resumed = 'none',
+} = defineProps<{
   title: string;
   confirmLabel: string;
+  /**
+   * The action is offered again after a step-up sign-in (FR-42): `confirm`
+   * to confirm it, `form` to fill its form in once more.
+   */
+  resumed?: 'confirm' | 'form' | 'none';
   /** A write is in flight: both buttons wait. */
   busy?: boolean;
   /** The form inside is not complete yet: only confirm waits. */
@@ -55,8 +66,14 @@ function cancel(): void {
 <template>
   <dialog ref="dialog" class="confirm" :aria-labelledby="headingId" @cancel.prevent="cancel">
     <h2 :id="headingId">{{ title }}</h2>
-    <slot />
+    <!-- One sentence, the true one: a resumed action whose sign-in is already
+         stale again (a reused id.airdress.co session, 2026-11-04) is not one
+         the person "signed in again" for, and said both at once. -->
     <p v-if="signInAhead" class="hint">{{ t('stepUp.ahead') }}</p>
+    <p v-else-if="resumed !== 'none'">
+      {{ t(resumed === 'form' ? 'stepUp.resumedForm' : 'stepUp.resumed') }}
+    </p>
+    <slot />
     <div class="actions">
       <button type="button" :disabled="busy" @click="cancel">{{ t('common.cancel') }}</button>
       <button
