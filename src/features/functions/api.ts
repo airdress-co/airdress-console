@@ -140,6 +140,55 @@ export interface LogLine {
   readonly body: string;
 }
 
+/** What decides whether a published version can run on this operator. */
+export interface VersionBuild {
+  readonly engineDigest: string | undefined;
+  readonly transpiler: string | undefined;
+}
+
+export function readVersionBuild(path: string, body: unknown): VersionBuild {
+  const r = R.of(path, body);
+  return { engineDigest: r.optString('engineDigest'), transpiler: r.optString('transpiler') };
+}
+
+/**
+ * Whether `build` runs on the operator that runs `current`. A version names
+ * the engine and transpiler it was built with, and an operator runs only its
+ * own (it refuses the rest `engine_unavailable`, RB-084 §3). The running
+ * version is by definition built on the running engine, so equality with it
+ * is the test. The digests are opaque and only compared, never parsed.
+ * Unknown either side is `true`: the operator still decides.
+ */
+export function runsHere(
+  build: VersionBuild | undefined,
+  current: VersionBuild | undefined,
+): boolean {
+  if (build?.engineDigest === undefined || current?.engineDigest === undefined) return true;
+  return build.engineDigest === current.engineDigest && build.transpiler === current.transpiler;
+}
+
+/** Each listed version's build, read from its source record (owner, or `ReadSource`). */
+export function useVersionBuilds(
+  versions: MaybeRefOrGetter<readonly string[]>,
+): ReturnType<typeof useQuery<ReadonlyMap<string, VersionBuild>>> {
+  const op = useOperator();
+  return useQuery({
+    queryKey: computed(() => operatorKeys.versionBuilds(op.fqdn.value ?? '', toValue(versions))),
+    queryFn: async () => {
+      const entries = await Promise.all(
+        toValue(versions).map(async (v): Promise<[string, VersionBuild]> => {
+          const path = `/v1/functions/sources/${encodeURIComponent(v)}`;
+          return [v, readVersionBuild(path, await op.request(path))];
+        }),
+      );
+      return new Map(entries);
+    },
+    enabled: computed(() => op.fqdn.value !== undefined && toValue(versions).length > 1),
+    // A version's build never changes.
+    staleTime: Infinity,
+  });
+}
+
 export function readLogs(path: string, body: unknown): readonly LogLine[] {
   return R.of(path, body).list('lines', (l) => {
     const raw = l.raw('body');

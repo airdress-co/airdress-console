@@ -15,8 +15,10 @@ import {
   isKindUnknown,
   schedulesFiring,
   useFunctionLogs,
+  runsHere,
   useFunctionVersions,
   useFunctionWrite,
+  useVersionBuilds,
   useFunctions,
   useSchedules,
 } from './api.ts';
@@ -34,6 +36,13 @@ const { t, locale } = useI18n();
 const functions = useFunctions();
 const schedules = useSchedules();
 const versions = useFunctionVersions(() => name);
+const builds = useVersionBuilds(() => (versions.data.value?.versions ?? []).map((v) => v.version));
+/** A version this operator cannot run gets no "Run this version": the operator would refuse it. */
+function runnable(version: string): boolean {
+  const current = versions.data.value?.current;
+  const map = builds.data.value;
+  return runsHere(map?.get(version), current === undefined ? undefined : map?.get(current));
+}
 const logs = useFunctionLogs(() => name);
 const write = useFunctionWrite();
 const stepUp = useStepUp();
@@ -220,12 +229,15 @@ async function confirm(): Promise<void> {
           <td class="mono">{{ v.signerMachine ?? v.signerKey?.slice(0, 16) ?? '—' }}</td>
           <td>
             <button
-              v-if="!v.current && !v.quarantined"
+              v-if="!v.current && !v.quarantined && runnable(v.version)"
               type="button"
               @click="askPromote(v.version)"
             >
               {{ t('functions.promote') }}
             </button>
+            <span v-else-if="!v.current && !v.quarantined" class="hint">
+              {{ t('functions.otherEngine') }}
+            </span>
           </td>
         </tr>
       </tbody>

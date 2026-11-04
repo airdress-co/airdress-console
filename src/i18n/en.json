@@ -53,7 +53,8 @@
   },
   "stepUp": {
     "resumed": "You signed in again. Confirm to finish what you started.",
-    "resumedForm": "You signed in again. Fill in the form once more to finish what you started."
+    "resumedForm": "You signed in again. Fill in the form once more to finish what you started.",
+    "ahead": "You signed in more than 5 minutes ago, so you will be asked to sign in again before this goes through. Then confirm once more."
   },
   "errors": {
     "code": "Code: {code}",
@@ -289,7 +290,8 @@
       "disable": "Its route stops answering at the next reconcile. Calls already running finish.",
       "enable": "It starts answering again at the next reconcile."
     },
-    "notServed": "This operator does not run functions: it was built without them."
+    "notServed": "This operator does not run functions: it was built without them.",
+    "otherEngine": "Built for an earlier engine: publish it again to run it."
   },
   "choose": {
     "heading": "Choose an airdress",

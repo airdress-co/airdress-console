@@ -23,4 +23,7 @@ export const operatorKeys = {
   functionVersions: (fqdn: string, name: string) =>
     ['op', fqdn, 'functions', name, 'versions'] as const,
   functionLogs: (fqdn: string, name: string) => ['op', fqdn, 'functions', name, 'logs'] as const,
+  /** Versions' builds by version id; a version's build never changes, so the ids are the key. */
+  versionBuilds: (fqdn: string, versions: readonly string[]) =>
+    ['op', fqdn, 'function-builds', ...versions] as const,
 };

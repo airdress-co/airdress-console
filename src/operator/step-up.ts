@@ -19,6 +19,22 @@ export interface PendingAction {
 
 export const PENDING_ACTION_KEY = 'airdress.console.pending-action';
 
+/**
+ * The operator's step-up window for console tokens (D-9, FR-40): a
+ * destructive write needs a sign-in no older than this. The operator is the
+ * authority and says so in its challenge; this only lets the console warn
+ * before the write rather than surprise after it.
+ */
+export const STEP_UP_WINDOW_SECONDS = 300;
+
+/** Whether a destructive write now will be sent to sign in again first. */
+export function freshSignInLikely(
+  signedInAt: number | undefined,
+  nowSeconds: number = Date.now() / 1000,
+): boolean {
+  return signedInAt !== undefined && nowSeconds - signedInAt > STEP_UP_WINDOW_SECONDS;
+}
+
 export function savePendingAction(storage: Storage, action: PendingAction): void {
   storage.setItem(PENDING_ACTION_KEY, JSON.stringify(action));
 }

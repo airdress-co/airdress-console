@@ -53,7 +53,8 @@
   },
   "stepUp": {
     "resumed": "Du hast dich neu angemeldet. Bestätige, um abzuschließen, was du begonnen hast.",
-    "resumedForm": "Du hast dich neu angemeldet. Fülle das Formular noch einmal aus, um abzuschließen, was du begonnen hast."
+    "resumedForm": "Du hast dich neu angemeldet. Fülle das Formular noch einmal aus, um abzuschließen, was du begonnen hast.",
+    "ahead": "Ihre Anmeldung liegt mehr als 5 Minuten zurück. Sie werden daher zuerst erneut angemeldet und bestätigen danach noch einmal."
   },
   "errors": {
     "code": "Code: {code}",
@@ -289,7 +290,8 @@
       "disable": "Ihre Route antwortet ab dem nächsten Abgleich nicht mehr. Bereits laufende Aufrufe laufen zu Ende.",
       "enable": "Sie antwortet ab dem nächsten Abgleich wieder."
     },
-    "notServed": "Dieser Operator führt keine Funktionen aus: Er wurde ohne sie gebaut."
+    "notServed": "Dieser Operator führt keine Funktionen aus: Er wurde ohne sie gebaut.",
+    "otherEngine": "Für eine frühere Engine gebaut: veröffentlichen Sie sie erneut, um sie auszuführen."
   },
   "choose": {
     "heading": "Airdress wählen",
