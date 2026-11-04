@@ -20,7 +20,16 @@ interface PendingSignIn {
 }
 
 export interface SignInRequest {
-  /** The operator's `/v1` resource. */
+  /**
+   * The resource the first token is for: the hub API or an operator's `/v1`.
+   * It is named only when the code is redeemed, never in the authorize
+   * request: the console is registered with `owned_resources`, and the hub
+   * grants "every operator I own plus the hub API" only when the authorize
+   * request names none. Naming one makes a grant for exactly that one, and
+   * choosing an airdress after signing in (a refresh for another resource)
+   * was then refused `invalid_target` (2026-11-04, the first live sign-in).
+   * The hub still decides, per token, whether the person may have it.
+   */
   readonly resource: string;
   /** In-app location to come back to after the callback. */
   readonly returnTo: string;
@@ -60,7 +69,6 @@ export async function buildAuthorizeUrl(
   url.searchParams.set('client_id', config.clientId);
   url.searchParams.set('redirect_uri', config.redirectUri);
   url.searchParams.set('scope', config.scope);
-  url.searchParams.set('resource', request.resource);
   url.searchParams.set('state', pending.state);
   url.searchParams.set('code_challenge', await challengeFor(pending.verifier));
   url.searchParams.set('code_challenge_method', 'S256');

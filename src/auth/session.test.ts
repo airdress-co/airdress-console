@@ -46,7 +46,7 @@ afterEach(() => {
 });
 
 describe('sign-in', () => {
-  it('asks the hub for one operator resource with PKCE S256 and the console scope', async () => {
+  it('asks the hub for its owned-resources grant with PKCE S256 and the console scope', async () => {
     const { session, navigations } = setup();
     await session.signIn(RESOURCE, '/');
     const [href] = navigations;
@@ -58,9 +58,11 @@ describe('sign-in', () => {
       client_id: 'airdress-console',
       redirect_uri: 'https://console.example/callback',
       scope: 'operator.admin offline_access',
-      resource: RESOURCE,
       code_challenge_method: 'S256',
     });
+    // Naming a resource here narrows the grant to it, and switching
+    // airdress afterwards is refused (see SignInRequest.resource).
+    expect(url.searchParams.has('resource')).toBe(false);
     expect(url.searchParams.has('max_age')).toBe(false);
   });
 
