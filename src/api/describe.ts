@@ -56,6 +56,15 @@ export function describeError(error: unknown): ErrorDescription {
     if (error.status === 401) {
       return { key: 'errors.signedOut', values: {}, code: error.code, requestId: error.requestId };
     }
+    // AC-14: a stale promote names who deployed in between.
+    if (error.code === 'source_base_stale' && error.changedBy !== undefined) {
+      return {
+        key: 'errors.staleBy',
+        values: { who: error.changedBy },
+        code: error.code,
+        requestId: error.requestId,
+      };
+    }
     if (error.code !== undefined && KNOWN_CODES.has(error.code)) {
       return {
         key: `errors.codes.${error.code}`,

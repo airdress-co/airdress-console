@@ -5,6 +5,8 @@ export class HttpError extends Error {
     readonly code: string | undefined,
     readonly requestId: string | undefined,
     message: string,
+    /** Who changed the thing in between, when the operator says (`source_base_stale`). */
+    readonly changedBy?: string | undefined,
   ) {
     super(message);
     this.name = 'HttpError';

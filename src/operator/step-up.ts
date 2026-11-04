@@ -19,20 +19,22 @@ export interface PendingAction {
 
 export const PENDING_ACTION_KEY = 'airdress.console.pending-action';
 
-/**
- * The operator's step-up window for console tokens (D-9, FR-40): a
- * destructive write needs a sign-in no older than this. The operator is the
- * authority and says so in its challenge; this only lets the console warn
- * before the write rather than surprise after it.
- */
-export const STEP_UP_WINDOW_SECONDS = 300;
+export {
+  STEP_UP_MARGIN_SECONDS,
+  STEP_UP_WINDOW_SECONDS,
+  askedMaxAge,
+  freshSignInLikely,
+} from './step-up-window.ts';
+import { askedMaxAge } from './step-up-window.ts';
 
-/** Whether a destructive write now will be sent to sign in again first. */
-export function freshSignInLikely(
-  signedInAt: number | undefined,
-  nowSeconds: number = Date.now() / 1000,
-): boolean {
-  return signedInAt !== undefined && nowSeconds - signedInAt > STEP_UP_WINDOW_SECONDS;
+/**
+ * Where to come back to after the sign-in: the page the action was started
+ * on (`/functions/<name>`), not just its area, or an action kept for one
+ * function is only offered again once that function is opened by hand.
+ */
+export function returnPath(area: Area, hash: string = window.location.hash): string {
+  const path = hash.replace(/^#/, '').split('?')[0] ?? '';
+  return path === `/${area}` || path.startsWith(`/${area}/`) ? path : `/${area}`;
 }
 
 export function savePendingAction(storage: Storage, action: PendingAction): void {
@@ -89,7 +91,7 @@ export function useStepUp(storage: Storage = window.sessionStorage): StepUp {
         const resource = session.resource.value;
         if (error instanceof StepUpRequiredError && resource !== undefined) {
           savePendingAction(storage, action);
-          await session.signIn(resource, `/${action.area}`, error.maxAge);
+          await session.signIn(resource, returnPath(action.area), askedMaxAge(error.maxAge));
         }
         throw error;
       }
