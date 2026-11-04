@@ -12,6 +12,8 @@ interface ErrorBody {
   readonly code: string | undefined;
   readonly message: string | undefined;
   readonly maxAge: number | undefined;
+  /** `source_base_stale`: who published what runs now (`currentPublishedBy`). */
+  readonly publishedBy?: string | undefined;
 }
 
 /**
@@ -26,7 +28,11 @@ export function readErrorBody(body: unknown): ErrorBody {
   if (typeof error === 'string') {
     const message =
       'message' in body && typeof body.message === 'string' ? body.message : undefined;
-    return { code: error, message, maxAge: undefined };
+    const publishedBy =
+      'currentPublishedBy' in body && typeof body.currentPublishedBy === 'string'
+        ? body.currentPublishedBy
+        : undefined;
+    return { code: error, message, maxAge: undefined, publishedBy };
   }
   if (typeof error === 'object' && error !== null) {
     const code = 'code' in error && typeof error.code === 'string' ? error.code : undefined;
@@ -80,6 +86,7 @@ function toHttpError(response: Response, body: ErrorBody): HttpError {
     requestId,
     body.message ??
       `The operator answered ${String(response.status)}${body.code === undefined ? '' : ` ${body.code}`}`,
+    body.publishedBy,
   );
 }
 

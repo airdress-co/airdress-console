@@ -86,7 +86,8 @@
       "configured_name": "That name is set by the operator's configuration.",
       "invalid_subname": "That record is not valid. Check the name, type, value and TTL.",
       "invalid_grant": "That grant is not valid. Check the kind, resource and actions."
-    }
+    },
+    "staleBy": "Someone else changed what runs since you looked: {who}. Reload and try again."
   },
   "overview": {
     "address": "Address",

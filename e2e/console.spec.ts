@@ -1,4 +1,5 @@
 import type { Page, Request } from '@playwright/test';
+import { askedMaxAge } from '../src/operator/step-up-window.ts';
 import { expect, test } from './fixtures.ts';
 import {
   AS_ORIGIN,
@@ -156,7 +157,9 @@ test('a destructive write after the step-up window signs in again and then compl
   await expect(dialog.getByText('You signed in again.')).toBeVisible();
   const log = await asTest<{ max_age: string | null }[]>('/test/log');
   expect(log.length).toBe(before + 1);
-  expect(log.at(-1)?.max_age).toBe(String(STEP_UP_MAX_AGE_SECS));
+  // Asked with the console's margin below the operator's window, so the
+  // token the hub issues still passes the operator a moment later.
+  expect(log.at(-1)?.max_age).toBe(String(askedMaxAge(STEP_UP_MAX_AGE_SECS)));
 
   await dialog.getByRole('button', { name: 'Remove' }).click();
   await expect(page.getByText(`${name} was removed.`)).toBeVisible();

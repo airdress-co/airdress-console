@@ -32,9 +32,14 @@ const resource = ref('');
 const actions = ref<string[]>([]);
 
 const resumed = stepUp.resume('grants');
-const target = ref<PendingAction | undefined>(resumed);
-const confirming = ref(resumed !== undefined);
-const wasResumed = ref(resumed !== undefined);
+// A resumed create has lost its form (nothing typed crosses the redirect),
+// so it opens the form with a notice, not a confirmation the person cannot
+// complete behind a modal (184-D.15). A resumed revoke confirms as before.
+const resumedCreate = resumed?.op === 'create';
+const target = ref<PendingAction | undefined>(resumedCreate ? undefined : resumed);
+const confirming = ref(resumed !== undefined && !resumedCreate);
+const wasResumed = ref(resumed !== undefined && !resumedCreate);
+const refill = ref(resumedCreate);
 const done = ref<string | undefined>(undefined);
 
 interface Principal {
@@ -64,6 +69,7 @@ const summary = computed(
 
 function askCreate(): void {
   if (!canCreate.value) return;
+  refill.value = false;
   done.value = undefined;
   wasResumed.value = false;
   target.value = { area: 'grants', op: 'create', target: '', label: summary.value };
@@ -120,6 +126,7 @@ async function confirm(): Promise<void> {
 <template>
   <AreaFrame area="grants">
     <p class="hint">{{ t('grants.lead') }}</p>
+    <p v-if="refill" class="notice" role="status">{{ t('stepUp.resumedForm') }}</p>
     <form class="form" @submit.prevent="askCreate">
       <label for="grant-principal">{{ t('grants.principal') }}</label>
       <select id="grant-principal" v-model="principalId">

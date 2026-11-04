@@ -86,7 +86,8 @@
       "configured_name": "Dieser Name ist in der Konfiguration des Operators festgelegt.",
       "invalid_subname": "Dieser Eintrag ist ungültig. Prüfe Name, Typ, Wert und TTL.",
       "invalid_grant": "Diese Berechtigung ist ungültig. Prüfe Art, Ressource und Aktionen."
-    }
+    },
+    "staleBy": "Seit Sie die Seite geladen haben, hat jemand anderes geändert, was läuft: {who}. Laden Sie neu und versuchen Sie es noch einmal."
   },
   "overview": {
     "address": "Adresse",
