@@ -24,6 +24,14 @@ export interface Session {
   completeSignIn(callback: URL): Promise<string>;
   /** The current access token, refreshing once if it has lapsed. */
   bearer(): Promise<string | undefined>;
+  /**
+   * When the person last entered their credentials (the token's `auth_time`,
+   * Unix seconds), or undefined without a session or the claim. A refresh
+   * keeps it; only an interactive sign-in moves it. The operator decides a
+   * step-up from this same claim (R7), so the console can say in advance
+   * that one is coming.
+   */
+  signedInAt(): number | undefined;
   /** Renew now; false means the person must sign in again. */
   refresh(): Promise<boolean>;
   /**
@@ -139,6 +147,7 @@ export function createSession(deps: SessionDeps): Session {
     },
     refresh,
     switchTo,
+    signedInAt: () => authTimeOf(deps.vault.accessToken()),
     async signOut() {
       const refreshToken = deps.vault.refreshToken();
       end();
@@ -151,6 +160,19 @@ export function createSession(deps: SessionDeps): Session {
       }
     },
   };
+}
+
+/** `auth_time` from a JWT access token's payload; undefined for anything else. */
+export function authTimeOf(token: string | undefined): number | undefined {
+  const payload = token?.split('.')[1];
+  if (payload === undefined) return undefined;
+  try {
+    const claims: unknown = JSON.parse(atob(payload.replaceAll('-', '+').replaceAll('_', '/')));
+    if (typeof claims !== 'object' || claims === null || !('auth_time' in claims)) return undefined;
+    return typeof claims.auth_time === 'number' ? claims.auth_time : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 export function useSession(): Session {
