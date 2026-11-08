@@ -216,3 +216,72 @@ test('H, the two levers: static-layer cache and no dashes', async ({ page, brows
     rows,
   );
 });
+
+test('Presets: screenshots', async ({ page, browserName }) => {
+  test.skip(browserName !== 'chromium', 'one engine for pictures');
+  mkdirSync('spike/results', { recursive: true });
+  for (const n of [60, 300]) {
+    for (const preset of ['columns', 'groups', 'free']) {
+      await open(
+        page,
+        `/spike/network.html?n=${String(n)}&seed=7&preset=${preset}&opt=cache,nodash&fixture=household`,
+      );
+      await page.evaluate(() => {
+        const s = (window as unknown as { __spike: { replayTo?: unknown } }).__spike;
+        return s;
+      });
+      await page.evaluate(() =>
+        (
+          window as unknown as { __spike: { replay: (ms: number) => Promise<unknown> } }
+        ).__spike.replay(300),
+      );
+      await page
+        .locator('canvas')
+        .screenshot({ path: `spike/results/look-${preset}-${String(n)}.png` });
+    }
+    await page.evaluate(() =>
+      (window as unknown as { __spike: { focus: () => unknown } }).__spike.focus(),
+    );
+    await page.locator('canvas').screenshot({ path: `spike/results/look-focus-${String(n)}.png` });
+  }
+});
+
+test('Presets: layout, determinism, quality, stability, frames, focus', async ({
+  page,
+  browserName,
+}) => {
+  const rows: Record<string, unknown> = {};
+  const frames = process.env['SPIKE_MODE'] === 'headed';
+  for (const fx of ['household', 'random']) {
+    for (const n of [300, 1_000, 3_000]) {
+      for (const preset of ['columns', 'groups', 'free']) {
+        await open(
+          page,
+          `/spike/network.html?n=${String(n)}&seed=7&preset=${preset}&opt=cache,nodash&fixture=${fx}`,
+        );
+        const s = await page.evaluate((small) => {
+          const w = (window as unknown as { __spike: Record<string, unknown> }).__spike;
+          const q = w['quality'] as () => unknown;
+          const st = w['stability'] as () => unknown;
+          const f = w['focus'] as () => unknown;
+          return {
+            layoutMs: w['layoutMs'],
+            hash: w['hash'],
+            quality: small ? q() : null,
+            stability: small ? st() : null,
+            focus: f(),
+          };
+        }, n === 300);
+        const replay = frames
+          ? await page.evaluate(() =>
+              (
+                window as unknown as { __spike: { replay: (ms: number) => Promise<unknown> } }
+              ).__spike.replay(10_000),
+            )
+          : null;
+        rows[`${fx} ${String(n)} ${preset}`] = { ...s, replay };
+      }
+    }
+  }
+  save(browserName, `presets-${process.env['SPIKE_MODE'] ?? 'headless'}`, rows);
+});

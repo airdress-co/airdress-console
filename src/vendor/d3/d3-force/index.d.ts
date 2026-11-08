@@ -59,3 +59,9 @@ export interface ForceLink<N extends SimulationNode, L extends SimulationLink<N>
 export function forceLink<N extends SimulationNode, L extends SimulationLink<N>>(
   links?: L[],
 ): ForceLink<N, L>;
+
+export interface ForceManyBody<N extends SimulationNode> extends Force<N> {
+  strength(s: number | ((n: N) => number)): this;
+  distanceMax(d: number): this;
+}
+export function forceManyBody<N extends SimulationNode>(): ForceManyBody<N>;

@@ -3,7 +3,16 @@
 import { createApp, h, ref } from 'vue';
 import NetworkCanvas from '@/features/network/NetworkCanvas.vue';
 import type { DrawStats } from '@/features/network/scene.ts';
-import { frameClock, setup, stability, summary, violations } from './shared.ts';
+import { focusLayout } from '@/features/network/layout.ts';
+import {
+  crossings,
+  frameClock,
+  overlaps2d,
+  setup,
+  stability,
+  summary,
+  violations,
+} from './shared.ts';
 
 type Canvas = InstanceType<typeof NetworkCanvas>;
 
@@ -43,7 +52,38 @@ Object.assign(window, {
     layoutMs: Math.round(s.layoutMs),
     hash: s.hash,
     violations,
-    stability: () => stability(s.seed, s.n),
+    preset: s.preset,
+    stability: () => stability(s.seed, s.n, s.preset),
+    quality: () => ({
+      overlaps: s.preset === 'columns' ? null : overlaps2d(s.positions),
+      crossings: s.n <= 1000 ? crossings(s.network, s.positions) : null,
+    }),
+    /** Time to lay out Focus around the busiest device, and enter it. */
+    focus: () => {
+      let best = 0;
+      let busiest = 0;
+      const degree = new Map<string, number>();
+      for (const e of s.network.edges) {
+        degree.set(e.source, (degree.get(e.source) ?? 0) + 1);
+        degree.set(e.target, (degree.get(e.target) ?? 0) + 1);
+      }
+      s.network.nodes.forEach((n, i) => {
+        const d = degree.get(n.id) ?? 0;
+        if (n.kind === 'device' && d > best) {
+          best = d;
+          busiest = i;
+        }
+      });
+      const started = performance.now();
+      const f = focusLayout(s.network, s.positions, busiest);
+      const ms = performance.now() - started;
+      canvasOf().focusOn(busiest);
+      return {
+        ms: Math.round(ms * 10) / 10,
+        ring1: f.hop.filter((h) => h === 1).length,
+        ring2: f.hop.filter((h) => h === 2).length,
+      };
+    },
     /** Play the whole window in `ms`, at the given zoom (undefined = fit). */
     replay: async (ms: number, scale?: number) => {
       const c = canvasOf();

@@ -4,6 +4,7 @@
 // arrow keys that walk lanes and associations, and a live region. Spike
 // version: strings are English only; the view's i18n comes with 189-D.
 import { computed, onBeforeUnmount, onMounted, ref, shallowRef, useTemplateRef, watch } from 'vue';
+import { focusLayout } from './layout.ts';
 import type { Positions } from './layout.ts';
 import type { Network } from './model.ts';
 import { Replay } from './replay.ts';
@@ -168,7 +169,13 @@ function onKey(event: KeyboardEvent): void {
       draw();
       event.preventDefault();
       return;
+    case 'f':
+    case 'F':
+      focusOn(i);
+      event.preventDefault();
+      return;
     case 'Escape':
+      if (focused.value !== undefined) leaveFocus();
       selected.value = undefined;
       draw();
       return;
@@ -248,12 +255,31 @@ watch(selected, () => {
   draw();
 });
 
+/** Focus (RDR-095): a radial layout around one node, laid over the base map. */
+const focused = ref<number | undefined>(undefined);
+function focusOn(i: number): void {
+  const s = scene.value;
+  if (s === undefined) return;
+  focused.value = i;
+  s.setPositions(focusLayout(network, positions, i));
+  view = s.fit();
+  draw();
+}
+function leaveFocus(): void {
+  const s = scene.value;
+  if (s === undefined) return;
+  focused.value = undefined;
+  s.setPositions(positions);
+  view = s.fit();
+  draw();
+}
+
 function retheme(): void {
   if (box.value !== null) scene.value?.setPalette(readPalette(box.value));
   draw();
 }
 
-defineExpose({ setTime, play, stop, exportPng, refit, zoomTo, draw, retheme });
+defineExpose({ setTime, play, stop, exportPng, refit, zoomTo, draw, retheme, focusOn, leaveFocus });
 </script>
 
 <template>
