@@ -9,6 +9,7 @@
   },
   "nav": {
     "overview": "Overview",
+    "network": "Network",
     "people": "People",
     "devices": "Devices",
     "machines": "Machines",
@@ -309,5 +310,49 @@
     "lead": "The airdresses you own. Choosing one keeps you signed in.",
     "none": "You do not own an airdress yet.",
     "byAddress": "Connect to another operator by address"
+  },
+  "network": {
+    "lead": "Who and what could use this airdress, and when. Scrub the timeline to replay how people, devices, keys, sessions and hosts were connected.",
+    "window": "Window",
+    "day": "Last 24 hours",
+    "week": "Last 7 days",
+    "month": "Last 31 days",
+    "arrangement": "Arrangement",
+    "columns": "Columns",
+    "groups": "Groups",
+    "free": "Free",
+    "graph": "Graph",
+    "table": "Table",
+    "focus": "Focus",
+    "leaveFocus": "Leave focus",
+    "export": "Export CSV",
+    "empty": "Nothing in this window yet.",
+    "summary": "{nodes} people, devices, sessions and hosts; {intervals} associations; {events} events.",
+    "coverage": "Events are kept from {from}; before that, only what the operator's tables still hold is shown (marked as reconstructed).",
+    "truncated": "More events than one view shows; narrow the window.",
+    "selected": "Selected",
+    "noneSelected": "Select a node to see its associations. Press F to focus on it.",
+    "associations": "Associations",
+    "from": "From",
+    "until": "Until",
+    "subject": "Subject",
+    "association": "Association",
+    "object": "Object",
+    "closedBy": "Closed by",
+    "open": "open",
+    "reconstructed": "reconstructed",
+    "asOf": "As of {time}: {count} associations held.",
+    "kind": {
+      "person": "Person",
+      "identity": "Identity or key",
+      "device": "Device",
+      "session": "Session",
+      "host": "Host or machine"
+    },
+    "closed": {
+      "event": "event",
+      "sweep": "sweep",
+      "unconfirmed": "unconfirmed"
+    }
   }
 }

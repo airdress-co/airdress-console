@@ -31,6 +31,7 @@ createApp({
       options: {
         cache: (new URLSearchParams(location.search).get('opt') ?? '').includes('cache'),
         dashes: !(new URLSearchParams(location.search).get('opt') ?? '').includes('nodash'),
+        software: new URLSearchParams(location.search).get('soft') === '1',
       },
       onFrame: (ms: number, stats: DrawStats) => {
         draws.push(ms);
@@ -95,6 +96,21 @@ Object.assign(window, {
       await c.play(ms);
       const raf = clock.stop();
       return { draw: summary(draws), frame: summary(raf), last };
+    },
+    /**
+     * Draw cost without requestAnimationFrame, for a browser whose page is
+     * hidden (Safari behind a locked screen pauses rAF but still runs script):
+     * `steps` synchronous draws across the window, each with the raster
+     * forced to finish (flush), so the time is the whole frame's work.
+     */
+    bench: (steps: number, scale?: number) => {
+      const c = canvasOf();
+      c.refit();
+      if (scale !== undefined) c.zoomTo(scale);
+      draws = [];
+      const span = s.network.to - s.network.from;
+      for (let k = 0; k <= steps; k++) c.setTime(s.network.from + (span * k) / steps);
+      return { draw: summary(draws), last, hidden: document.visibilityState };
     },
     exportPng: async () => {
       const blob = await canvasOf().exportPng();

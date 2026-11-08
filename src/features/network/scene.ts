@@ -56,6 +56,11 @@ export interface SceneOptions {
   readonly cache: boolean;
   /** Dashed standing edges (false: solid at reduced alpha). */
   readonly dashes: boolean;
+  /**
+   * Measurement only: a CPU-backed canvas (`willReadFrequently`), whose
+   * read-back is synchronous even where the GPU is suspended (a hidden page).
+   */
+  readonly software?: boolean;
 }
 
 export interface DrawStats {
@@ -83,7 +88,10 @@ export class Scene {
     private palette: Palette,
     private readonly options: SceneOptions = { cache: false, dashes: true },
   ) {
-    const ctx = canvas.getContext('2d', { alpha: false });
+    const ctx = canvas.getContext('2d', {
+      alpha: false,
+      willReadFrequently: options.software === true,
+    });
     if (ctx === null) throw new Error('no 2D context');
     this.ctx = ctx;
     this.src = Uint32Array.from(network.edges, (e) => pos.index.get(e.source) ?? 0);
@@ -272,6 +280,11 @@ export class Scene {
     selected: number | undefined,
     flush = false,
   ): DrawStats {
+    // Nothing to draw into before the first layout, or while the graph is
+    // hidden (the table view): a 0×0 canvas cannot be a drawImage source.
+    if (this.canvas.width === 0 || this.canvas.height === 0) {
+      return { edges: 0, nodes: 0, labels: 0 };
+    }
     const { ctx, pos, palette, src, dst } = this;
     const glyphs = this.glyphs;
     const hop = pos.hop;

@@ -8,10 +8,21 @@
 export const CONSOLE_FLOOR = 'v0.1.164';
 
 export type Area =
-  'overview' | 'people' | 'devices' | 'machines' | 'subnames' | 'shells' | 'grants' | 'functions';
+  | 'overview'
+  | 'network'
+  | 'people'
+  | 'devices'
+  | 'machines'
+  | 'subnames'
+  | 'shells'
+  | 'grants'
+  | 'functions';
 
 export const AREA_SINCE: Readonly<Record<Area, string>> = {
   overview: 'v0.1.113', // GET /v1/capabilities
+  // GET /v1/admin/network — proof of concept (SPEC-189): on the operator
+  // branch feat/network-view-poc, cut from v0.1.170; no release serves it yet.
+  network: 'v0.1.170',
   people: 'v0.1.78', // /v1/admin/sub-users/{id}/publication-block
   devices: 'v0.1.9', // /v1/endpoints/enrollments/{id}
   machines: 'v0.1.72', // /v1/admin/machines/*
@@ -23,6 +34,7 @@ export const AREA_SINCE: Readonly<Record<Area, string>> = {
 
 export const AREAS: readonly Area[] = [
   'overview',
+  'network',
   'people',
   'devices',
   'machines',

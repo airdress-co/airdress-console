@@ -1,0 +1,54 @@
+{
+  "ua": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.6.2 Safari/605.1.15",
+  "random 300 columns": {
+    "crossings": 176048,
+    "hash": "f6acb9b8",
+    "layoutMs": 283,
+    "csp": [],
+    "overlaps": null,
+    "hidden": "hidden"
+  },
+  "random 300 groups": {
+    "crossings": 122564,
+    "hash": "77f24106",
+    "layoutMs": 536,
+    "csp": [],
+    "overlaps": 0,
+    "hidden": "hidden"
+  },
+  "random 300 free": {
+    "crossings": 126598,
+    "hash": "9291b4b5",
+    "layoutMs": 526,
+    "csp": [],
+    "overlaps": 0,
+    "hidden": "hidden"
+  },
+  "household 300 columns": {
+    "crossings": 8866,
+    "hash": "e33f494f",
+    "layoutMs": 209,
+    "csp": [],
+    "overlaps": null,
+    "hidden": "hidden"
+  },
+  "household 300 groups": {
+    "crossings": 5082,
+    "hash": "2679d74a",
+    "layoutMs": 460,
+    "csp": [],
+    "overlaps": 0,
+    "hidden": "hidden"
+  },
+  "household 300 free": {
+    "crossings": 3178,
+    "hash": "0916214a",
+    "layoutMs": 420,
+    "csp": [],
+    "overlaps": 0,
+    "hidden": "hidden"
+  },
+  "cytoscape csp": [
+    "style-src-elem inline http://127.0.0.1:47950/assets/cyto-B5W6QSWq.js:7"
+  ]
+}

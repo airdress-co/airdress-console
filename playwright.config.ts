@@ -21,7 +21,15 @@ if (existsSync(webkitLibs)) {
   process.env['LD_LIBRARY_PATH'] = [webkitLibs, process.env['LD_LIBRARY_PATH'] ?? '']
     .filter((p) => p !== '')
     .join(':');
-  webkitEnv['LD_PRELOAD'] = ['libevent-2.1.so.7', 'libmanette-0.2.so.0', 'libhidapi-hidraw.so.0']
+  // WebKit 2370 (Playwright 1.64) also needs libavif and its two decoders.
+  webkitEnv['LD_PRELOAD'] = [
+    'libevent-2.1.so.7',
+    'libmanette-0.2.so.0',
+    'libhidapi-hidraw.so.0',
+    'libyuv.so.0',
+    'libgav1.so.1',
+    'libavif.so.16',
+  ]
     .map((lib) => join(webkitLibs, lib))
     .filter((path) => existsSync(path))
     .join(':');
