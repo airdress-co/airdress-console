@@ -25,7 +25,11 @@ const {
   /** Renderer levers (189-0.2). The default is what the spike recommends. */
   options?: SceneOptions;
 }>();
-const emit = defineEmits<{ frame: [drawMs: number, stats: DrawStats] }>();
+const emit = defineEmits<{
+  frame: [drawMs: number, stats: DrawStats];
+  select: [node: number | undefined];
+  time: [t: number];
+}>();
 
 const canvas = useTemplateRef<HTMLCanvasElement>('canvas');
 const box = useTemplateRef<HTMLDivElement>('box');
@@ -81,6 +85,7 @@ function draw(): void {
 function setTime(next: number): void {
   t.value = Math.min(Math.max(next, network.from), network.to);
   state.value = replay.value.at(t.value);
+  emit('time', t.value);
   draw();
 }
 
@@ -251,7 +256,8 @@ onBeforeUnmount(() => {
   resizeObserver?.disconnect();
 });
 
-watch(selected, () => {
+watch(selected, (i) => {
+  emit('select', i);
   draw();
 });
 

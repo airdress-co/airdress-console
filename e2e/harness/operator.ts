@@ -122,6 +122,8 @@ export async function startOperator(opts: OperatorOptions): Promise<RunningOpera
   }
   // A short directory: PostgreSQL's unix socket path is limited to ~100 bytes.
   const root = mkdtempSync(join(tmpdir(), 'ace2e-'));
+  // Tests that seed the database directly find it here (network.spec.ts).
+  process.env['E2E_OPERATOR_ROOT'] = root;
   const dataDir = join(root, 'pg');
   const credentials = join(root, 'creds');
   const configPath = join(root, 'operator.toml');

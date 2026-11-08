@@ -17,6 +17,7 @@ export const operatorKeys = {
   preauthKeys: (fqdn: string) => ['op', fqdn, 'machines', 'preauth-keys'] as const,
   subnames: (fqdn: string) => ['op', fqdn, 'subnames'] as const,
   shells: (fqdn: string) => ['op', fqdn, 'shells'] as const,
+  network: (fqdn: string, from: string, to: string) => ['op', fqdn, 'network', from, to] as const,
   grants: (fqdn: string) => ['op', fqdn, 'grants'] as const,
   functions: (fqdn: string) => ['op', fqdn, 'functions', 'list'] as const,
   schedules: (fqdn: string) => ['op', fqdn, 'functions', 'schedules'] as const,

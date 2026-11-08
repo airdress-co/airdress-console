@@ -9,6 +9,7 @@
   },
   "nav": {
     "overview": "Übersicht",
+    "network": "Netzwerk",
     "people": "Personen",
     "devices": "Geräte",
     "machines": "Maschinen",
@@ -309,5 +310,49 @@
     "lead": "Die Airdresses, die dir gehören. Wenn du eine wählst, bleibst du angemeldet.",
     "none": "Dir gehört noch keine Airdress.",
     "byAddress": "Über die Adresse mit einem anderen Operator verbinden"
+  },
+  "network": {
+    "lead": "Wer und was diese Airdress nutzen konnte, und wann. Zieh die Zeitleiste, um nachzuspielen, wie Personen, Geräte, Schlüssel, Sitzungen und Hosts verbunden waren.",
+    "window": "Zeitraum",
+    "day": "Letzte 24 Stunden",
+    "week": "Letzte 7 Tage",
+    "month": "Letzte 31 Tage",
+    "arrangement": "Anordnung",
+    "columns": "Spalten",
+    "groups": "Gruppen",
+    "free": "Frei",
+    "graph": "Graph",
+    "table": "Tabelle",
+    "focus": "Fokus",
+    "leaveFocus": "Fokus verlassen",
+    "export": "CSV exportieren",
+    "empty": "In diesem Zeitraum gibt es noch nichts.",
+    "summary": "{nodes} Personen, Geräte, Sitzungen und Hosts; {intervals} Verbindungen; {events} Ereignisse.",
+    "coverage": "Ereignisse liegen ab {from} vor; davor zeigt die Ansicht nur, was die Tabellen des Operators noch enthalten (als rekonstruiert markiert).",
+    "truncated": "Mehr Ereignisse, als eine Ansicht zeigt; wähle einen kürzeren Zeitraum.",
+    "selected": "Ausgewählt",
+    "noneSelected": "Wähle einen Knoten, um seine Verbindungen zu sehen. F fokussiert ihn.",
+    "associations": "Verbindungen",
+    "from": "Von",
+    "until": "Bis",
+    "subject": "Subjekt",
+    "association": "Verbindung",
+    "object": "Objekt",
+    "closedBy": "Beendet durch",
+    "open": "offen",
+    "reconstructed": "rekonstruiert",
+    "asOf": "Stand {time}: {count} Verbindungen bestehen.",
+    "kind": {
+      "person": "Person",
+      "identity": "Identität oder Schlüssel",
+      "device": "Gerät",
+      "session": "Sitzung",
+      "host": "Host oder Maschine"
+    },
+    "closed": {
+      "event": "Ereignis",
+      "sweep": "Bereinigung",
+      "unconfirmed": "unbestätigt"
+    }
   }
 }

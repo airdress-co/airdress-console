@@ -15,7 +15,7 @@ PAGES = 'http://127.0.0.1:47950/spike'
 REPLAY_MS = int(sys.argv[1]) if len(sys.argv) > 1 else 30000
 
 
-def call(method, path, body=None, timeout=600):
+def call(method, path, body=None, timeout=180):
     req = urllib.request.Request(
         DRIVER + path,
         method=method,

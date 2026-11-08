@@ -182,3 +182,26 @@ straight), so they compare the presets, not absolute legibility.
 - Not built: the person-badge collapse of RDR-095 §7.5's dense tier, label
   collision handling inside a cluster, and tweened transitions between
   arrangements.
+
+## Addendum, 2026-11-09: Safari on a locked Mac
+
+The owner's Mac (M1 Pro, macOS 26.6.2, Safari 26.6.2) runs as a server and
+stays locked. Behind the lock Safari marks the page `hidden`:
+`requestAnimationFrame` never fires, so no replay completes, and forcing a GPU
+canvas's raster to finish (`getImageData`) never returns. What still works,
+over `safaridriver` with `spike/serve.py` (the production CSP) and
+`spike/safari.py`:
+
+- **Correctness, measured** (`results/safari-correctness.json`): the layout
+  hash in Safari equals Chromium's, Firefox's and WebKit's for Columns, Groups
+  and Free on both fixtures (300 nodes): `f6acb9b8`, `77f24106`, `9291b4b5`
+  (random) and `e33f494f`, `2679d74a`, `0916214a` (household). Zero CSP
+  violations for ours; Cytoscape raises its one `style-src-elem`. Layout took
+  209–536 ms (Chromium 94–305 ms) while hidden.
+- **Draw performance, not measurable here.** With a CPU-backed canvas
+  (`willReadFrequently`, `soft=1`) a synchronous draw does return, but takes
+  645 ms at the median (p95 7 s) for 300 nodes, against about 12 ms in
+  software raster on Linux: macOS throttles the locked, hidden page. Those
+  numbers say nothing about an unlocked Safari and are not used. SPEC-189
+  189-0.8 stays open for a measurement with the screen on (an unlocked
+  session, or Screen Sharing for ten minutes).
