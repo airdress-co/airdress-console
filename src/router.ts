@@ -29,6 +29,11 @@ const routes: readonly RouteRecordRaw[] = [
     name: 'subnames',
     component: () => import('@/features/subnames/SubnamesView.vue'),
   },
+  {
+    path: '/network',
+    name: 'network',
+    component: () => import('@/features/network/NetworkView.vue'),
+  },
   { path: '/shells', name: 'shells', component: () => import('@/features/shells/ShellsView.vue') },
   { path: '/grants', name: 'grants', component: () => import('@/features/grants/GrantsView.vue') },
   {

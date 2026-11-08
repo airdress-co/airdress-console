@@ -9,7 +9,20 @@ import tseslint from 'typescript-eslint';
 
 export default defineConfig(
   {
-    ignores: ['dist/**', 'build-meta/**', 'node_modules/**', 'coverage/**', 'src/api/generated/**'],
+    ignores: [
+      'dist/**',
+      'build-meta/**',
+      'node_modules/**',
+      'coverage/**',
+      'src/api/generated/**',
+      // The renderer spike (SPEC-189 189-0.2): vendored d3 as published, and
+      // the measurement harness, which never ships.
+      'src/vendor/**',
+      'spike/**',
+      'dist-spike/**',
+      'vite.spike.config.ts',
+      'playwright.spike.config.ts',
+    ],
   },
   ...tseslint.configs.strictTypeChecked,
   ...tseslint.configs.stylisticTypeChecked,

@@ -1,0 +1,101 @@
+{
+  "meta": {
+    "n": 300,
+    "edges": 1500,
+    "events": 5000,
+    "layoutMs": 206,
+    "hash": "f6acb9b8"
+  },
+  "stability": {
+    "addTenPercent": 662.7,
+    "shiftWindow": 578.1,
+    "addTenPercentAnchored": 0,
+    "shiftWindowAnchored": 0,
+    "anchoredOverlaps": 0,
+    "baseOverlaps": 0
+  },
+  "replay": {
+    "fit": {
+      "draw": {
+        "p50": 0,
+        "p95": 1,
+        "max": 1,
+        "n": 1860
+      },
+      "frame": {
+        "p50": 16,
+        "p95": 17,
+        "max": 21,
+        "n": 1859
+      },
+      "last": {
+        "edges": 1500,
+        "nodes": 188,
+        "labels": 0
+      }
+    },
+    "zoomed": {
+      "draw": {
+        "p50": 0,
+        "p95": 1,
+        "max": 1,
+        "n": 1814
+      },
+      "frame": {
+        "p50": 16,
+        "p95": 20,
+        "max": 24,
+        "n": 1813
+      },
+      "last": {
+        "edges": 1500,
+        "nodes": 188,
+        "labels": 16
+      }
+    }
+  },
+  "png": {
+    "bytes": 170018,
+    "width": 2524,
+    "height": 1120
+  },
+  "keyboard": {
+    "walk": [
+      "ArrowDown→net-node-1",
+      "ArrowDown→net-node-2",
+      "ArrowRight→net-node-41",
+      "ArrowRight→net-node-100",
+      "ArrowUp→net-node-87",
+      "ArrowLeft→net-node-48",
+      "Enter→net-node-48",
+      "Escape→net-node-48"
+    ],
+    "scrubber": {
+      "before": "9 Oct, 00:00",
+      "oneStep": "9 Oct, 00:08",
+      "after": "12 Oct, 04:31"
+    },
+    "live": "identity 24, present, 5 associations, at 12 Oct, 04:31"
+  },
+  "axe": [],
+  "csp": [],
+  "flushed": {
+    "draw": {
+      "p50": 3,
+      "p95": 6,
+      "max": 16,
+      "n": 1863
+    },
+    "frame": {
+      "p50": 16,
+      "p95": 17,
+      "max": 21,
+      "n": 1862
+    },
+    "last": {
+      "edges": 1500,
+      "nodes": 188,
+      "labels": 0
+    }
+  }
+}

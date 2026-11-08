@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.spike.tsbuildinfo"
+  },
+  "include": ["spike/**/*.ts", "src/**/*.ts", "src/**/*.vue", "env.d.ts"],
+  "exclude": ["src/**/*.test.ts", "src/test/**", "spike/e2e/**"]
+}
