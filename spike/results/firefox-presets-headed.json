@@ -1,0 +1,602 @@
+{
+  "household 300 columns": {
+    "layoutMs": 169,
+    "hash": "e33f494f",
+    "quality": {
+      "overlaps": null,
+      "crossings": 8866
+    },
+    "stability": {
+      "addTenPercent": 662.7,
+      "shiftWindow": 578.1,
+      "addTenPercentAnchored": 0,
+      "shiftWindowAnchored": 0,
+      "anchoredOverlaps": 0,
+      "baseOverlaps": 0
+    },
+    "focus": {
+      "ms": 0,
+      "ring1": 4,
+      "ring2": 14
+    },
+    "replay": {
+      "draw": {
+        "p50": 0,
+        "p95": 1,
+        "max": 2,
+        "n": 1202
+      },
+      "frame": {
+        "p50": 8.06,
+        "p95": 9.08,
+        "max": 9.1,
+        "n": 1201
+      },
+      "last": {
+        "edges": 18,
+        "nodes": 181,
+        "labels": 0
+      }
+    }
+  },
+  "household 300 groups": {
+    "layoutMs": 383,
+    "hash": "2679d74a",
+    "quality": {
+      "overlaps": 0,
+      "crossings": 5082
+    },
+    "stability": {
+      "addTenPercent": 190.3,
+      "shiftWindow": 145.5,
+      "addTenPercentAnchored": 0,
+      "shiftWindowAnchored": 0,
+      "anchoredOverlaps": 42,
+      "baseOverlaps": 0
+    },
+    "focus": {
+      "ms": 0,
+      "ring1": 4,
+      "ring2": 14
+    },
+    "replay": {
+      "draw": {
+        "p50": 0,
+        "p95": 1,
+        "max": 2,
+        "n": 1202
+      },
+      "frame": {
+        "p50": 8.06,
+        "p95": 9.06,
+        "max": 9.2,
+        "n": 1201
+      },
+      "last": {
+        "edges": 18,
+        "nodes": 181,
+        "labels": 0
+      }
+    }
+  },
+  "household 300 free": {
+    "layoutMs": 353,
+    "hash": "0916214a",
+    "quality": {
+      "overlaps": 0,
+      "crossings": 3178
+    },
+    "stability": {
+      "addTenPercent": 212.4,
+      "shiftWindow": 200.9,
+      "addTenPercentAnchored": 54.6,
+      "shiftWindowAnchored": 0,
+      "anchoredOverlaps": 19,
+      "baseOverlaps": 0
+    },
+    "focus": {
+      "ms": 0,
+      "ring1": 4,
+      "ring2": 14
+    },
+    "replay": {
+      "draw": {
+        "p50": 0,
+        "p95": 1,
+        "max": 2,
+        "n": 1202
+      },
+      "frame": {
+        "p50": 8.06,
+        "p95": 9.06,
+        "max": 9.28,
+        "n": 1201
+      },
+      "last": {
+        "edges": 18,
+        "nodes": 181,
+        "labels": 0
+      }
+    }
+  },
+  "household 1000 columns": {
+    "layoutMs": 661,
+    "hash": "ff1de187",
+    "quality": null,
+    "stability": null,
+    "focus": {
+      "ms": 1,
+      "ring1": 4,
+      "ring2": 18
+    },
+    "replay": {
+      "draw": {
+        "p50": 0,
+        "p95": 1,
+        "max": 2,
+        "n": 1199
+      },
+      "frame": {
+        "p50": 8.06,
+        "p95": 9.06,
+        "max": 17.12,
+        "n": 1198
+      },
+      "last": {
+        "edges": 21,
+        "nodes": 604,
+        "labels": 0
+      }
+    }
+  },
+  "household 1000 groups": {
+    "layoutMs": 1619,
+    "hash": "1f9d7c20",
+    "quality": null,
+    "stability": null,
+    "focus": {
+      "ms": 1,
+      "ring1": 4,
+      "ring2": 18
+    },
+    "replay": {
+      "draw": {
+        "p50": 0,
+        "p95": 1,
+        "max": 2,
+        "n": 1202
+      },
+      "frame": {
+        "p50": 8.08,
+        "p95": 9.08,
+        "max": 9.18,
+        "n": 1201
+      },
+      "last": {
+        "edges": 21,
+        "nodes": 604,
+        "labels": 0
+      }
+    }
+  },
+  "household 1000 free": {
+    "layoutMs": 1563,
+    "hash": "f189c553",
+    "quality": null,
+    "stability": null,
+    "focus": {
+      "ms": 1,
+      "ring1": 4,
+      "ring2": 18
+    },
+    "replay": {
+      "draw": {
+        "p50": 0,
+        "p95": 1,
+        "max": 2,
+        "n": 1201
+      },
+      "frame": {
+        "p50": 8.06,
+        "p95": 9.06,
+        "max": 16.6,
+        "n": 1200
+      },
+      "last": {
+        "edges": 21,
+        "nodes": 604,
+        "labels": 0
+      }
+    }
+  },
+  "household 3000 columns": {
+    "layoutMs": 2555,
+    "hash": "16d92899",
+    "quality": null,
+    "stability": null,
+    "focus": {
+      "ms": 2,
+      "ring1": 4,
+      "ring2": 15
+    },
+    "replay": {
+      "draw": {
+        "p50": 1,
+        "p95": 2,
+        "max": 3,
+        "n": 1197
+      },
+      "frame": {
+        "p50": 8.06,
+        "p95": 9.08,
+        "max": 33.28,
+        "n": 1196
+      },
+      "last": {
+        "edges": 19,
+        "nodes": 1777,
+        "labels": 0
+      }
+    }
+  },
+  "household 3000 groups": {
+    "layoutMs": 5627,
+    "hash": "d73cd459",
+    "quality": null,
+    "stability": null,
+    "focus": {
+      "ms": 2,
+      "ring1": 4,
+      "ring2": 15
+    },
+    "replay": {
+      "draw": {
+        "p50": 1,
+        "p95": 2,
+        "max": 4,
+        "n": 1198
+      },
+      "frame": {
+        "p50": 8.06,
+        "p95": 9.08,
+        "max": 25.22,
+        "n": 1197
+      },
+      "last": {
+        "edges": 19,
+        "nodes": 1777,
+        "labels": 0
+      }
+    }
+  },
+  "household 3000 free": {
+    "layoutMs": 5447,
+    "hash": "9da0d5c8",
+    "quality": null,
+    "stability": null,
+    "focus": {
+      "ms": 1,
+      "ring1": 4,
+      "ring2": 15
+    },
+    "replay": {
+      "draw": {
+        "p50": 1,
+        "p95": 2,
+        "max": 4,
+        "n": 1197
+      },
+      "frame": {
+        "p50": 8.06,
+        "p95": 9.08,
+        "max": 33.3,
+        "n": 1196
+      },
+      "last": {
+        "edges": 19,
+        "nodes": 1777,
+        "labels": 0
+      }
+    }
+  },
+  "random 300 columns": {
+    "layoutMs": 170,
+    "hash": "f6acb9b8",
+    "quality": {
+      "overlaps": null,
+      "crossings": 176048
+    },
+    "stability": {
+      "addTenPercent": 662.7,
+      "shiftWindow": 578.1,
+      "addTenPercentAnchored": 0,
+      "shiftWindowAnchored": 0,
+      "anchoredOverlaps": 0,
+      "baseOverlaps": 0
+    },
+    "focus": {
+      "ms": 1,
+      "ring1": 16,
+      "ring2": 122
+    },
+    "replay": {
+      "draw": {
+        "p50": 0,
+        "p95": 1,
+        "max": 3,
+        "n": 1201
+      },
+      "frame": {
+        "p50": 8.06,
+        "p95": 9.06,
+        "max": 9.24,
+        "n": 1200
+      },
+      "last": {
+        "edges": 379,
+        "nodes": 188,
+        "labels": 0
+      }
+    }
+  },
+  "random 300 groups": {
+    "layoutMs": 486,
+    "hash": "77f24106",
+    "quality": {
+      "overlaps": 0,
+      "crossings": 122564
+    },
+    "stability": {
+      "addTenPercent": 190.3,
+      "shiftWindow": 145.5,
+      "addTenPercentAnchored": 0,
+      "shiftWindowAnchored": 0,
+      "anchoredOverlaps": 42,
+      "baseOverlaps": 0
+    },
+    "focus": {
+      "ms": 1,
+      "ring1": 16,
+      "ring2": 122
+    },
+    "replay": {
+      "draw": {
+        "p50": 0,
+        "p95": 1,
+        "max": 2,
+        "n": 1201
+      },
+      "frame": {
+        "p50": 8.06,
+        "p95": 9.08,
+        "max": 9.2,
+        "n": 1200
+      },
+      "last": {
+        "edges": 379,
+        "nodes": 188,
+        "labels": 0
+      }
+    }
+  },
+  "random 300 free": {
+    "layoutMs": 484,
+    "hash": "9291b4b5",
+    "quality": {
+      "overlaps": 0,
+      "crossings": 126598
+    },
+    "stability": {
+      "addTenPercent": 212.4,
+      "shiftWindow": 200.9,
+      "addTenPercentAnchored": 54.6,
+      "shiftWindowAnchored": 0,
+      "anchoredOverlaps": 19,
+      "baseOverlaps": 0
+    },
+    "focus": {
+      "ms": 1,
+      "ring1": 16,
+      "ring2": 122
+    },
+    "replay": {
+      "draw": {
+        "p50": 0,
+        "p95": 1,
+        "max": 2,
+        "n": 1202
+      },
+      "frame": {
+        "p50": 8.08,
+        "p95": 9.08,
+        "max": 9.26,
+        "n": 1201
+      },
+      "last": {
+        "edges": 379,
+        "nodes": 188,
+        "labels": 0
+      }
+    }
+  },
+  "random 1000 columns": {
+    "layoutMs": 806,
+    "hash": "9a2b6cf1",
+    "quality": null,
+    "stability": null,
+    "focus": {
+      "ms": 2,
+      "ring1": 22,
+      "ring2": 202
+    },
+    "replay": {
+      "draw": {
+        "p50": 1,
+        "p95": 1,
+        "max": 2,
+        "n": 1199
+      },
+      "frame": {
+        "p50": 8.06,
+        "p95": 9.08,
+        "max": 17.14,
+        "n": 1198
+      },
+      "last": {
+        "edges": 401,
+        "nodes": 635,
+        "labels": 0
+      }
+    }
+  },
+  "random 1000 groups": {
+    "layoutMs": 2169,
+    "hash": "15b540e5",
+    "quality": null,
+    "stability": null,
+    "focus": {
+      "ms": 1,
+      "ring1": 22,
+      "ring2": 202
+    },
+    "replay": {
+      "draw": {
+        "p50": 1,
+        "p95": 1,
+        "max": 2,
+        "n": 1200
+      },
+      "frame": {
+        "p50": 8.06,
+        "p95": 9.08,
+        "max": 16.18,
+        "n": 1199
+      },
+      "last": {
+        "edges": 401,
+        "nodes": 635,
+        "labels": 0
+      }
+    }
+  },
+  "random 1000 free": {
+    "layoutMs": 2159,
+    "hash": "b30f872c",
+    "quality": null,
+    "stability": null,
+    "focus": {
+      "ms": 1,
+      "ring1": 22,
+      "ring2": 202
+    },
+    "replay": {
+      "draw": {
+        "p50": 1,
+        "p95": 2,
+        "max": 7,
+        "n": 1198
+      },
+      "frame": {
+        "p50": 8.06,
+        "p95": 9.08,
+        "max": 17.16,
+        "n": 1197
+      },
+      "last": {
+        "edges": 401,
+        "nodes": 635,
+        "labels": 0
+      }
+    }
+  },
+  "random 3000 columns": {
+    "layoutMs": 3419,
+    "hash": "07407c97",
+    "quality": null,
+    "stability": null,
+    "focus": {
+      "ms": 3,
+      "ring1": 21,
+      "ring2": 227
+    },
+    "replay": {
+      "draw": {
+        "p50": 1,
+        "p95": 2,
+        "max": 3,
+        "n": 1192
+      },
+      "frame": {
+        "p50": 8.06,
+        "p95": 9.08,
+        "max": 33.32,
+        "n": 1191
+      },
+      "last": {
+        "edges": 314,
+        "nodes": 1899,
+        "labels": 0
+      }
+    }
+  },
+  "random 3000 groups": {
+    "layoutMs": 8788,
+    "hash": "0d4b464e",
+    "quality": null,
+    "stability": null,
+    "focus": {
+      "ms": 2,
+      "ring1": 21,
+      "ring2": 227
+    },
+    "replay": {
+      "draw": {
+        "p50": 2,
+        "p95": 3,
+        "max": 8,
+        "n": 1194
+      },
+      "frame": {
+        "p50": 8.08,
+        "p95": 9.06,
+        "max": 33.48,
+        "n": 1193
+      },
+      "last": {
+        "edges": 314,
+        "nodes": 1899,
+        "labels": 0
+      }
+    }
+  },
+  "random 3000 free": {
+    "layoutMs": 8614,
+    "hash": "223b0ef3",
+    "quality": null,
+    "stability": null,
+    "focus": {
+      "ms": 2,
+      "ring1": 21,
+      "ring2": 227
+    },
+    "replay": {
+      "draw": {
+        "p50": 2,
+        "p95": 3,
+        "max": 4,
+        "n": 1188
+      },
+      "frame": {
+        "p50": 8.06,
+        "p95": 9.08,
+        "max": 33.26,
+        "n": 1187
+      },
+      "last": {
+        "edges": 314,
+        "nodes": 1899,
+        "labels": 0
+      }
+    }
+  }
+}

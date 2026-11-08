@@ -1,0 +1,278 @@
+{
+  "household 300 columns": {
+    "layoutMs": 197,
+    "hash": "e33f494f",
+    "quality": {
+      "overlaps": null,
+      "crossings": 8866
+    },
+    "stability": {
+      "addTenPercent": 662.7,
+      "shiftWindow": 578.1,
+      "addTenPercentAnchored": 0,
+      "shiftWindowAnchored": 0,
+      "anchoredOverlaps": 0,
+      "baseOverlaps": 0
+    },
+    "focus": {
+      "ms": 0,
+      "ring1": 4,
+      "ring2": 14
+    },
+    "replay": null
+  },
+  "household 300 groups": {
+    "layoutMs": 329,
+    "hash": "2679d74a",
+    "quality": {
+      "overlaps": 0,
+      "crossings": 5082
+    },
+    "stability": {
+      "addTenPercent": 190.3,
+      "shiftWindow": 145.5,
+      "addTenPercentAnchored": 0,
+      "shiftWindowAnchored": 0,
+      "anchoredOverlaps": 42,
+      "baseOverlaps": 0
+    },
+    "focus": {
+      "ms": 0,
+      "ring1": 4,
+      "ring2": 14
+    },
+    "replay": null
+  },
+  "household 300 free": {
+    "layoutMs": 316,
+    "hash": "0916214a",
+    "quality": {
+      "overlaps": 0,
+      "crossings": 3178
+    },
+    "stability": {
+      "addTenPercent": 212.4,
+      "shiftWindow": 200.9,
+      "addTenPercentAnchored": 54.6,
+      "shiftWindowAnchored": 0,
+      "anchoredOverlaps": 19,
+      "baseOverlaps": 0
+    },
+    "focus": {
+      "ms": 0,
+      "ring1": 4,
+      "ring2": 14
+    },
+    "replay": null
+  },
+  "household 1000 columns": {
+    "layoutMs": 718,
+    "hash": "ff1de187",
+    "quality": null,
+    "stability": null,
+    "focus": {
+      "ms": 0,
+      "ring1": 4,
+      "ring2": 18
+    },
+    "replay": null
+  },
+  "household 1000 groups": {
+    "layoutMs": 1279,
+    "hash": "1f9d7c20",
+    "quality": null,
+    "stability": null,
+    "focus": {
+      "ms": 1,
+      "ring1": 4,
+      "ring2": 18
+    },
+    "replay": null
+  },
+  "household 1000 free": {
+    "layoutMs": 1219,
+    "hash": "f189c553",
+    "quality": null,
+    "stability": null,
+    "focus": {
+      "ms": 0,
+      "ring1": 4,
+      "ring2": 18
+    },
+    "replay": null
+  },
+  "household 3000 columns": {
+    "layoutMs": 2610,
+    "hash": "16d92899",
+    "quality": null,
+    "stability": null,
+    "focus": {
+      "ms": 2,
+      "ring1": 4,
+      "ring2": 15
+    },
+    "replay": null
+  },
+  "household 3000 groups": {
+    "layoutMs": 4691,
+    "hash": "d73cd459",
+    "quality": null,
+    "stability": null,
+    "focus": {
+      "ms": 1,
+      "ring1": 4,
+      "ring2": 15
+    },
+    "replay": null
+  },
+  "household 3000 free": {
+    "layoutMs": 4491,
+    "hash": "9da0d5c8",
+    "quality": null,
+    "stability": null,
+    "focus": {
+      "ms": 1,
+      "ring1": 4,
+      "ring2": 15
+    },
+    "replay": null
+  },
+  "random 300 columns": {
+    "layoutMs": 175,
+    "hash": "f6acb9b8",
+    "quality": {
+      "overlaps": null,
+      "crossings": 176048
+    },
+    "stability": {
+      "addTenPercent": 662.7,
+      "shiftWindow": 578.1,
+      "addTenPercentAnchored": 0,
+      "shiftWindowAnchored": 0,
+      "anchoredOverlaps": 0,
+      "baseOverlaps": 0
+    },
+    "focus": {
+      "ms": 1,
+      "ring1": 16,
+      "ring2": 122
+    },
+    "replay": null
+  },
+  "random 300 groups": {
+    "layoutMs": 404,
+    "hash": "77f24106",
+    "quality": {
+      "overlaps": 0,
+      "crossings": 122564
+    },
+    "stability": {
+      "addTenPercent": 190.3,
+      "shiftWindow": 145.5,
+      "addTenPercentAnchored": 0,
+      "shiftWindowAnchored": 0,
+      "anchoredOverlaps": 42,
+      "baseOverlaps": 0
+    },
+    "focus": {
+      "ms": 0,
+      "ring1": 16,
+      "ring2": 122
+    },
+    "replay": null
+  },
+  "random 300 free": {
+    "layoutMs": 409,
+    "hash": "9291b4b5",
+    "quality": {
+      "overlaps": 0,
+      "crossings": 126598
+    },
+    "stability": {
+      "addTenPercent": 212.4,
+      "shiftWindow": 200.9,
+      "addTenPercentAnchored": 54.6,
+      "shiftWindowAnchored": 0,
+      "anchoredOverlaps": 19,
+      "baseOverlaps": 0
+    },
+    "focus": {
+      "ms": 0,
+      "ring1": 16,
+      "ring2": 122
+    },
+    "replay": null
+  },
+  "random 1000 columns": {
+    "layoutMs": 866,
+    "hash": "9a2b6cf1",
+    "quality": null,
+    "stability": null,
+    "focus": {
+      "ms": 1,
+      "ring1": 22,
+      "ring2": 202
+    },
+    "replay": null
+  },
+  "random 1000 groups": {
+    "layoutMs": 1779,
+    "hash": "15b540e5",
+    "quality": null,
+    "stability": null,
+    "focus": {
+      "ms": 1,
+      "ring1": 22,
+      "ring2": 202
+    },
+    "replay": null
+  },
+  "random 1000 free": {
+    "layoutMs": 1742,
+    "hash": "b30f872c",
+    "quality": null,
+    "stability": null,
+    "focus": {
+      "ms": 1,
+      "ring1": 22,
+      "ring2": 202
+    },
+    "replay": null
+  },
+  "random 3000 columns": {
+    "layoutMs": 3657,
+    "hash": "07407c97",
+    "quality": null,
+    "stability": null,
+    "focus": {
+      "ms": 2,
+      "ring1": 21,
+      "ring2": 227
+    },
+    "replay": null
+  },
+  "random 3000 groups": {
+    "layoutMs": 7303,
+    "hash": "0d4b464e",
+    "quality": null,
+    "stability": null,
+    "focus": {
+      "ms": 2,
+      "ring1": 21,
+      "ring2": 227
+    },
+    "replay": null
+  },
+  "random 3000 free": {
+    "layoutMs": 7142,
+    "hash": "223b0ef3",
+    "quality": null,
+    "stability": null,
+    "focus": {
+      "ms": 2,
+      "ring1": 21,
+      "ring2": 227
+    },
+    "replay": null
+  }
+}

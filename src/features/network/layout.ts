@@ -3,7 +3,14 @@
 // the playhead does. x is the node's lane; y comes from a force simulation run
 // to a fixed number of ticks with no timer, so the result is a pure function
 // of the input.
-import { forceCollide, forceLink, forceSimulation, forceY } from '@/vendor/d3/d3-force/index.js';
+import {
+  forceCollide,
+  forceLink,
+  forceManyBody,
+  forceSimulation,
+  forceX,
+  forceY,
+} from '@/vendor/d3/d3-force/index.js';
 import type { SimulationNode } from '@/vendor/d3/d3-force/index.js';
 import { KINDS } from './model.ts';
 import type { Kind, Network } from './model.ts';
@@ -21,7 +28,29 @@ interface LayoutNode extends SimulationNode {
   y: number;
 }
 
+/**
+ * The arrangements of RDR-095: one seeded, timer-less layout run over the
+ * window, with different forces. `columns` pins each kind to a lane (boxes);
+ * `groups` keeps soft lane bands and pulls each person's identities, devices
+ * and sessions together (glyphs, halos); `free` drops the bands. Focus is not
+ * a preset: it is `focusLayout`, laid over whichever preset is showing.
+ */
+export const PRESETS = ['columns', 'groups', 'free'] as const;
+export type Preset = (typeof PRESETS)[number];
+
+export interface Halo {
+  /** Index of the person node the halo belongs to. */
+  readonly person: number;
+  readonly x: number;
+  readonly y: number;
+  readonly r: number;
+}
+
 export interface Positions {
+  readonly preset: Preset;
+  /** Per node, the index of the person it belongs to, or -1 (shared: hosts, machines). */
+  readonly owner: Int32Array;
+  readonly halos: readonly Halo[];
   readonly x: Float64Array;
   readonly y: Float64Array;
   /** Node id to index into x and y. */
@@ -40,7 +69,17 @@ export function laneX(kind: Kind): number {
  * place (fixed in the simulation), so growing the graph or sliding the window
  * never moves what the person has already seen; only new nodes are placed.
  */
-export function layout(network: Network, anchors?: Positions): Positions {
+export function layout(
+  network: Network,
+  anchors?: Positions,
+  preset: Preset = 'columns',
+): Positions {
+  return preset === 'columns'
+    ? columnsLayout(network, anchors)
+    : forceLayout(network, preset, anchors);
+}
+
+function columnsLayout(network: Network, anchors?: Positions): Positions {
   // Initial positions are set here rather than by d3's phyllotaxis, which uses
   // Math.cos and Math.sin: those may differ in the last bit between engines,
   // and the point is a layout that is identical in every browser.
@@ -89,7 +128,228 @@ export function layout(network: Network, anchors?: Positions): Positions {
     top = Math.min(top, y[i] ?? 0);
     bottom = Math.max(bottom, y[i] ?? 0);
   });
-  return { x, y, index, width: (KINDS.length - 1) * LANE_GAP + NODE_W, top, bottom };
+  return {
+    preset: 'columns',
+    owner: owners(network, index),
+    halos: [],
+    x,
+    y,
+    index,
+    width: (KINDS.length - 1) * LANE_GAP + NODE_W,
+    top,
+    bottom,
+  };
+}
+
+/**
+ * Who each node belongs to: a person owns the identities linked from it, an
+ * identity's devices belong to the same person, and a device's sessions too.
+ * Hosts and machines are shared and belong to nobody.
+ */
+export function owners(network: Network, index: ReadonlyMap<string, number>): Int32Array {
+  const owner = new Int32Array(network.nodes.length).fill(-1);
+  network.nodes.forEach((n, i) => {
+    if (n.kind === 'person') owner[i] = i;
+  });
+  // Edges point down the lanes (person → identity → device → session), so three
+  // passes in lane order settle every chain.
+  for (const kind of ['identity', 'device', 'session'] as const) {
+    for (const e of network.edges) {
+      const s = index.get(e.source) ?? -1;
+      const t = index.get(e.target) ?? -1;
+      if (s < 0 || t < 0 || network.nodes[t]?.kind !== kind || owner[t] !== -1) continue;
+      owner[t] = owner[s] ?? -1;
+    }
+  }
+  return owner;
+}
+
+/** Glyph size per kind in the force presets (RDR-095 §7.2), as a collision radius. */
+const GLYPH_R = 16;
+const BAND = 0.55;
+
+interface ForceNode extends SimulationNode {
+  readonly id: string;
+  readonly kind: Kind;
+  readonly owner: number;
+  x: number;
+  y: number;
+}
+
+function forceLayout(network: Network, preset: Preset, anchors?: Positions): Positions {
+  const index = new Map<string, number>();
+  network.nodes.forEach((n, i) => index.set(n.id, i));
+  const owner = owners(network, index);
+  // Each person's cluster starts on its own row; shared nodes start in their
+  // lane. Arithmetic only, so the start is the same in every engine.
+  const people = network.nodes.flatMap((n, i) => (n.kind === 'person' ? [i] : []));
+  const row = new Map<number, number>();
+  people.forEach((p, k) => row.set(p, k));
+  const seen = new Map<number, number>();
+  const nodes: ForceNode[] = network.nodes.map((n, i) => {
+    const o = owner[i] ?? -1;
+    const k = seen.get(o) ?? 0;
+    seen.set(o, k + 1);
+    const base = o >= 0 ? (row.get(o) ?? 0) * 140 : (k % 40) * 30;
+    return {
+      id: n.id,
+      kind: n.kind,
+      owner: o,
+      x: laneX(n.kind) * BAND + (k % 5) * 9,
+      y: base + (k % 7) * 11 - (people.length * 140) / 2,
+    };
+  });
+  if (anchors !== undefined) {
+    for (const node of nodes) {
+      const i = anchors.index.get(node.id);
+      if (i === undefined) continue;
+      node.x = anchors.x[i] ?? node.x;
+      node.y = anchors.y[i] ?? node.y;
+      node.fx = node.x;
+      node.fy = node.y;
+    }
+  }
+  const links = network.edges.map((e) => ({ source: e.source, target: e.target }));
+
+  // Pull each owned node toward its person's current centroid.
+  const cluster = (alpha: number): void => {
+    const sx = new Map<number, number>();
+    const sy = new Map<number, number>();
+    const count = new Map<number, number>();
+    for (const n of nodes) {
+      if (n.owner < 0) continue;
+      sx.set(n.owner, (sx.get(n.owner) ?? 0) + n.x);
+      sy.set(n.owner, (sy.get(n.owner) ?? 0) + n.y);
+      count.set(n.owner, (count.get(n.owner) ?? 0) + 1);
+    }
+    for (const n of nodes) {
+      if (n.owner < 0) continue;
+      const c = count.get(n.owner) ?? 1;
+      n.vx = (n.vx ?? 0) + ((sx.get(n.owner) ?? 0) / c - n.x) * 0.3 * alpha;
+      n.vy = (n.vy ?? 0) + ((sy.get(n.owner) ?? 0) / c - n.y) * 0.3 * alpha;
+    }
+  };
+
+  const simulation = forceSimulation(nodes)
+    .stop()
+    .force(
+      'link',
+      forceLink<ForceNode, { source: string; target: string }>(links)
+        .id((n) => n.id)
+        .distance(46)
+        // Links into a shared host pull weakly, or every cluster collapses onto it.
+        .strength((l) =>
+          typeof l.target === 'object' && (l.target as ForceNode).kind === 'host' ? 0.03 : 0.45,
+        ),
+    )
+    .force('charge', forceManyBody<ForceNode>().strength(-55).distanceMax(400))
+    .force('collide', forceCollide<ForceNode>(GLYPH_R).iterations(3))
+    .force('cluster', cluster)
+    .force(
+      'band',
+      forceX<ForceNode>((n) => laneX(n.kind) * BAND).strength(preset === 'groups' ? 0.18 : 0),
+    )
+    .force('centreX', forceX<ForceNode>(LANE_GAP * 2 * BAND).strength(preset === 'free' ? 0.03 : 0))
+    .force('centreY', forceY<ForceNode>(0).strength(0.03));
+  simulation.tick(TICKS);
+
+  const x = new Float64Array(nodes.length);
+  const y = new Float64Array(nodes.length);
+  let left = Infinity;
+  let right = -Infinity;
+  let top = Infinity;
+  let bottom = -Infinity;
+  nodes.forEach((n, i) => {
+    x[i] = Math.round(n.x * 100) / 100;
+    y[i] = Math.round(n.y * 100) / 100;
+    left = Math.min(left, x[i] ?? 0);
+    right = Math.max(right, x[i] ?? 0);
+    top = Math.min(top, y[i] ?? 0);
+    bottom = Math.max(bottom, y[i] ?? 0);
+  });
+  // Shift so the layout starts at x = 0 like the columns do; never when
+  // anchored, or the shift itself would move every node already placed.
+  if (anchors === undefined) for (let i = 0; i < x.length; i++) x[i] = (x[i] ?? 0) - left + GLYPH_R;
+  const halos: Halo[] = [];
+  for (const p of people) {
+    const members = nodes.flatMap((n, i) => (n.owner === p ? [i] : []));
+    if (members.length < 2) continue;
+    const cx = members.reduce((s, i) => s + (x[i] ?? 0), 0) / members.length;
+    const cy = members.reduce((s, i) => s + (y[i] ?? 0), 0) / members.length;
+    // The 85th percentile, so one far-flung session does not inflate the halo.
+    const d = members
+      .map((i) => Math.hypot((x[i] ?? 0) - cx, (y[i] ?? 0) - cy))
+      .sort((a, b) => a - b);
+    const r = (d[Math.floor(d.length * 0.85)] ?? 0) + 20;
+    halos.push({ person: p, x: cx, y: cy, r });
+  }
+  return { preset, owner, halos, x, y, index, width: right - left + 2 * GLYPH_R, top, bottom };
+}
+
+/**
+ * Focus (RDR-095 §7.2): the selection at the centre, what is one association
+ * away on the first ring, two away on the second, everything else on a third,
+ * dimmed by the renderer. A separate, disposable layout: the base map is not
+ * touched, so leaving Focus returns to the same picture.
+ */
+export function focusLayout(
+  network: Network,
+  base: Positions,
+  centre: number,
+): Positions & { readonly hop: Uint8Array } {
+  const n = network.nodes.length;
+  const adjacency: number[][] = Array.from({ length: n }, () => []);
+  for (const e of network.edges) {
+    const s = base.index.get(e.source) ?? -1;
+    const t = base.index.get(e.target) ?? -1;
+    if (s < 0 || t < 0) continue;
+    adjacency[s]?.push(t);
+    adjacency[t]?.push(s);
+  }
+  const hop = new Uint8Array(n).fill(3);
+  hop[centre] = 0;
+  let frontier = [centre];
+  for (let h = 1; h <= 2; h++) {
+    const next: number[] = [];
+    for (const a of frontier) {
+      for (const b of adjacency[a] ?? []) {
+        if (hop[b] !== 3 || b === centre) continue;
+        hop[b] = h;
+        next.push(b);
+      }
+    }
+    frontier = next;
+  }
+  const kindOrder = (i: number): number => KINDS.indexOf(network.nodes[i]?.kind ?? 'device');
+  const x = new Float64Array(n);
+  const y = new Float64Array(n);
+  const R = [0, 110, 220, 330];
+  for (let ring = 1; ring <= 3; ring++) {
+    const members = [...Array(n).keys()].filter((i) => hop[i] === ring);
+    members.sort(
+      (a, b) =>
+        (base.owner[a] ?? -1) - (base.owner[b] ?? -1) || kindOrder(a) - kindOrder(b) || a - b,
+    );
+    members.forEach((i, k) => {
+      const angle = (2 * Math.PI * k) / Math.max(1, members.length);
+      x[i] = (R[ring] ?? 0) * Math.cos(angle);
+      y[i] = (R[ring] ?? 0) * Math.sin(angle);
+    });
+  }
+  const extent = R[3] ?? 0;
+  for (let i = 0; i < n; i++) x[i] = (x[i] ?? 0) + extent + GLYPH_R;
+  return {
+    preset: base.preset === 'columns' ? 'groups' : base.preset,
+    owner: base.owner,
+    halos: [],
+    x,
+    y,
+    index: base.index,
+    width: 2 * extent + 2 * GLYPH_R,
+    top: -extent,
+    bottom: extent,
+    hop,
+  };
 }
 
 /**

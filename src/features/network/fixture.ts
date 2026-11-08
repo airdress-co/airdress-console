@@ -129,3 +129,82 @@ export function fixture(seed: number, size: FixtureSize): Network {
   events.sort((x, y) => x.t - y.t || (x.edge < y.edge ? -1 : 1));
   return { from, to, nodes, edges, events };
 }
+
+/**
+ * A structured network shaped like an airdress: people, each with one
+ * identity and two to five devices; devices open short sessions on a few
+ * shared hosts and some hold standing access to them. Sized by `nodes`
+ * (people are about 8% of it). For judging the look of a layout; `fixture`
+ * (random endpoints) stays the worst case for performance.
+ */
+export function household(seed: number, size: FixtureSize): Network {
+  const random = rng(seed);
+  const days = size.days ?? 30;
+  const from = size.from ?? Date.UTC(2026, 9, 9);
+  const to = from + days * DAY;
+  const nodes: NetNode[] = [];
+  const edges: NetEdge[] = [];
+  const add = (kind: Kind, label: string): NetNode => {
+    const node = { id: `${kind}-${String(nodes.length)}`, kind, label };
+    nodes.push(node);
+    return node;
+  };
+  const link = (
+    a: NetNode,
+    b: NetNode,
+    style: EdgeStyle,
+    start: number,
+    end: number | null,
+  ): void => {
+    edges.push({
+      id: `e-${String(edges.length)}`,
+      source: a.id,
+      target: b.id,
+      style,
+      start,
+      end: end !== null && end >= to ? null : end,
+      closedBy: end !== null && end < to ? 'event' : null,
+    });
+  };
+  const hostCount = Math.max(2, Math.round(size.nodes * 0.05));
+  const hosts = Array.from({ length: hostCount }, (_, i) =>
+    add('host', i === 0 ? 'ai-nas-0' : `host ${String(i)}`),
+  );
+  const names = ['Robert', 'Mia', 'Lena', 'Ben', 'Ava', 'Noah', 'Ida', 'Max', 'Lea', 'Tom'];
+  const devicesOf = ['phone', 'laptop', 'tablet', 'TV', 'watch'];
+  let people = 0;
+  while (nodes.length < size.nodes) {
+    const person = add(
+      'person',
+      `${names[people % names.length] ?? 'P'}${people >= names.length ? ` ${String(Math.floor(people / names.length))}` : ''}`,
+    );
+    people++;
+    const identity = add('identity', `${person.label}'s sign-in`);
+    link(person, identity, 'could', from - 10 * DAY, null);
+    const count = 2 + Math.floor(random() * 4);
+    for (let d = 0; d < count && nodes.length < size.nodes; d++) {
+      const device = add('device', `${person.label}'s ${devicesOf[d] ?? 'device'}`);
+      const enrolled = random() < 0.8 ? from - 5 * DAY : from + random() * (to - from);
+      const revoked = random() < 0.12 ? enrolled + random() * (to - enrolled) : null;
+      link(identity, device, 'could', enrolled, revoked);
+      const home = hosts[Math.floor(random() * hosts.length)];
+      if (home !== undefined && random() < 0.5) link(device, home, 'could', enrolled, revoked);
+      const sessions = Math.floor(random() * 3);
+      for (let k = 0; k < sessions && nodes.length < size.nodes; k++) {
+        const session = add('session', `session ${String(k)}`);
+        const host = hosts[Math.floor(random() * hosts.length)];
+        const start = Math.max(enrolled, from) + random() * DAY * 20;
+        const end = start + (10 + random() * 200) * 60_000;
+        link(device, session, 'used', start, end);
+        if (host !== undefined) link(session, host, 'used', start, end);
+      }
+    }
+  }
+  const events: NetEvent[] = [];
+  for (const e of edges) {
+    if (e.start >= from) events.push({ t: e.start, name: 'opened', edge: e.id });
+    if (e.end !== null) events.push({ t: e.end, name: 'closed', edge: e.id });
+  }
+  events.sort((x, y) => x.t - y.t || (x.edge < y.edge ? -1 : 1));
+  return { from, to, nodes, edges, events };
+}

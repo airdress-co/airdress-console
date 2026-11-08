@@ -120,3 +120,65 @@ with the history, which anchoring needs anyway), not WebGL.
 - `playwright.spike.config.ts`: WebKit 2370 also needs `libavif16`,
   `libgav1-1` and `libyuv0`; unpacked privately like `e2e/webkit-libs.sh`.
   The console's own e2e will hit the same thing when it moves to WebKit 2370.
+
+## Addendum, 2026-11-09: every arrangement, decided late (RDR-095)
+
+The owner asked to build all of RDR-095's arrangements and choose the default
+late. They are one seeded, timer-less layout with different forces
+(`layout(network, anchors, preset)`), plus Focus (`focusLayout`), all drawn by
+the same Canvas 2D scene:
+
+- **Columns**: the lanes measured above (boxes, bezier edges).
+- **Groups**: soft lane bands (`forceX` 0.18 toward the kind's band), a pull
+  toward each person's centroid, links into shared hosts weak (0.03) so the
+  clusters do not collapse onto them; person halos; glyphs per kind
+  (RDR-095 §7.2), straight edges.
+- **Free**: Groups without the bands: people become islands around the
+  shared hosts.
+- **Focus** (`f` on a node, Escape back): the selection at the centre, rings
+  at one and two associations, the rest dimmed; a separate layout, the base
+  map untouched.
+
+Two fixtures: `household` (people with one identity and 2–5 devices, short
+sessions on a few shared hosts), used for judging the look, and `random`
+(random endpoints), the performance worst case. Screenshots:
+`results/look-{columns,groups,free,focus}-{60,300}.png` (household,
+Chromium). Raw numbers: `results/*-presets-*.json`.
+
+### Numbers (household fixture unless stated; Chromium / Firefox / WebKit)
+
+|                                                                | Columns              | Groups               | Free                 |
+| -------------------------------------------------------------- | -------------------- | -------------------- | -------------------- |
+| Layout, 300 nodes                                              | 94 / 162 / 197 ms    | 235 / 375 / 329 ms   | 217 / 360 / 316 ms   |
+| Layout, 1,000 nodes                                            | 0.42 / 0.69 / 0.72 s | 1.02 / 1.60 / 1.28 s | 0.98 / 1.57 / 1.22 s |
+| Layout, 3,000 nodes                                            | 1.7 / 2.5 / 2.6 s    | 3.7 / 5.8 / 4.7 s    | 3.4 / 5.5 / 4.5 s    |
+| Same layout in all three engines                               | yes                  | yes                  | yes                  |
+| Edge crossings, 300 nodes                                      | 8,866                | 5,082                | 3,178                |
+| Overlapping glyphs, 300 nodes                                  | 0 (boxes)            | 0                    | 0                    |
+| Shared nodes moved, +10% / window +5 days, no anchors (random) | 663 / 578 px         | 190 / 146 px         | 212 / 201 px         |
+| The same, anchored                                             | 0 / 0 px             | 0 / 0 px             | 0 / 0 px             |
+| New-on-old overlaps when anchored (random, ~330 nodes)         | 0                    | 42                   | 19                   |
+| Frame p95 on the GPU, 300–3,000 nodes                          | 8.4 / 9.1 ms         | 8.4 / 9.1 ms         | 8.4 / 9.1 ms         |
+| Focus layout, 300–3,000 nodes                                  | 0.2–1.9 ms           |                      |                      |
+
+Crossings count each edge as a straight segment (Columns' beziers counted
+straight), so they compare the presets, not absolute legibility.
+
+### What this says
+
+- **Rendering does not choose for us.** Every preset holds the GPU frame
+  budget at every size measured; the choice is about reading, not cost.
+- **Layout cost does, above 1,000 nodes.** The force presets cost 2.2–3x
+  Columns and pass a second at 1,000 nodes on the main thread; SPEC-189
+  189-D.16 (layout off the main thread, or positions persisted) now applies
+  to them first.
+- **Anchoring is enough for stability in every preset** (0 px), but the
+  force presets need a final nudge so new nodes do not land on anchored ones
+  (the lane pass does that for Columns).
+- **Free crosses least** (3,178 against Columns' 8,866 at 300 nodes) and
+  reads as islands per person; Columns is the most legible for a small
+  household; Groups sits between, with the people as bands.
+- **Focus is effectively free** (under 2 ms at 3,000 nodes).
+- Not built: the person-badge collapse of RDR-095 §7.5's dense tier, label
+  collision handling inside a cluster, and tweened transitions between
+  arrangements.
