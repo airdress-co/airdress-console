@@ -6,3 +6,6 @@ src/api/generated
 api/operator-openapi.yaml
 playwright-report
 test-results
+src/vendor
+spike/results
+dist-spike

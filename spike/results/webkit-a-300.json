@@ -1,0 +1,28 @@
+{
+  "replay": {
+    "draw": {
+      "p50": 0,
+      "p95": 0,
+      "max": 1,
+      "n": 1862
+    },
+    "frame": {
+      "p50": 16,
+      "p95": 17,
+      "max": 53,
+      "n": 1861
+    }
+  },
+  "png": {
+    "bytes": 648855
+  },
+  "csp": [
+    "style-src-elem inline http://127.0.0.1:47950/assets/cyto-VY1MVanW.js:7"
+  ],
+  "injectedStyles": [
+    {
+      "id": "__________cytoscape_stylesheet",
+      "text": ".__________cytoscape_container { position: relative; }"
+    }
+  ]
+}
