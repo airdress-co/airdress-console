@@ -328,7 +328,7 @@
     "export": "CSV exportieren",
     "empty": "In diesem Zeitraum gibt es noch nichts.",
     "summary": "{nodes} Personen, Geräte, Sitzungen und Hosts; {intervals} Verbindungen; {events} Ereignisse.",
-    "coverage": "Ereignisse liegen ab {from} vor; davor zeigt die Ansicht nur, was die Tabellen des Operators noch enthalten (als rekonstruiert markiert).",
+    "coverage": "Die Ereignisliste beginnt am {from}; die Verbindungen stammen aus dem eigenen Verlauf des Operators und reichen weiter zurück.",
     "truncated": "Mehr Ereignisse, als eine Ansicht zeigt; wähle einen kürzeren Zeitraum.",
     "selected": "Ausgewählt",
     "noneSelected": "Wähle einen Knoten, um seine Verbindungen zu sehen. F fokussiert ihn.",
@@ -353,6 +353,9 @@
       "event": "Ereignis",
       "sweep": "Bereinigung",
       "unconfirmed": "unbestätigt"
-    }
+    },
+    "off": "Die Netzwerkansicht ist aus. Solange sie aus ist, bewahrt der Operator 30 Tage auf, wer diese Airdress nutzen konnte, ohne Adressen; schalte sie ein, um das zu sehen und 90 Tage aufzubewahren.",
+    "turnOn": "Netzwerkansicht einschalten",
+    "since": "Verlauf aufgezeichnet seit {time}."
   }
 }

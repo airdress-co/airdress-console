@@ -8,7 +8,8 @@ import { useI18n } from 'vue-i18n';
 import AreaFrame from '@/components/AreaFrame.vue';
 import ErrorNotice from '@/components/ErrorNotice.vue';
 import NetworkCanvas from './NetworkCanvas.vue';
-import { useNetwork, windowOf } from './api.ts';
+import { HttpError } from '@/api/errors.ts';
+import { useNetwork, useNetworkSwitch, windowOf } from './api.ts';
 import type { WindowName } from './api.ts';
 import { layout, PRESETS } from './layout.ts';
 import type { Positions, Preset } from './layout.ts';
@@ -18,6 +19,11 @@ const windowName = ref<WindowName>('week');
 const openedAt = Date.now();
 const window = computed(() => windowOf(windowName.value, openedAt));
 const query = useNetwork(window);
+const toggle = useNetworkSwitch();
+/** The view is off (403 not_enabled): the owner turns it on here (FR-46). */
+const switchedOff = computed(
+  () => query.error.value instanceof HttpError && query.error.value.code === 'not_enabled',
+);
 const preset = ref<Preset>('groups');
 const view = ref<'graph' | 'table'>('graph');
 const canvas = useTemplateRef<InstanceType<typeof NetworkCanvas>>('canvas');
@@ -153,7 +159,14 @@ function focusSelected(): void {
       </button>
     </div>
 
-    <ErrorNotice v-if="query.error.value !== null" :error="query.error.value" />
+    <section v-if="switchedOff" class="off">
+      <p>{{ t('network.off') }}</p>
+      <button type="button" :disabled="toggle.isPending.value" @click="toggle.mutate(true)">
+        {{ t('network.turnOn') }}
+      </button>
+      <ErrorNotice v-if="toggle.error.value !== null" :error="toggle.error.value" />
+    </section>
+    <ErrorNotice v-else-if="query.error.value !== null" :error="query.error.value" />
     <p v-else-if="query.isPending.value">{{ t('common.loading') }}</p>
     <template v-else-if="network !== undefined && positions !== undefined">
       <p class="hint">
@@ -168,6 +181,9 @@ function focusSelected(): void {
           {{ t('network.coverage', { from: fmt(read.eventsFrom) }) }}
         </template>
         <template v-if="read?.eventsTruncated">{{ t('network.truncated') }}</template>
+        <template v-if="read?.historyStartsAt !== undefined">
+          {{ ' ' + t('network.since', { time: fmt(read.historyStartsAt) }) }}
+        </template>
       </p>
       <p v-if="network.nodes.length === 0">{{ t('network.empty') }}</p>
       <div v-else class="body" :class="{ hidden: view !== 'graph' }">
