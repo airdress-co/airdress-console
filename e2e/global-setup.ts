@@ -21,6 +21,8 @@ export default async function globalSetup(): Promise<() => Promise<void>> {
   const binary =
     process.env['AIRDRESS_OPERATOR_BIN'] ??
     execFileSync('sh', ['e2e/fetch-operator.sh'], { encoding: 'utf8' }).trim();
+  // The network suite drives the operator's own CLI against the same database.
+  process.env['E2E_OPERATOR_BINARY'] = binary;
   const as = await startFakeAs({
     port: AS_PORT,
     consoleOrigin: CONSOLE_ORIGIN,

@@ -328,7 +328,7 @@
     "export": "Export CSV",
     "empty": "Nothing in this window yet.",
     "summary": "{nodes} people, devices, sessions and hosts; {intervals} associations; {events} events.",
-    "coverage": "Events are kept from {from}; before that, only what the operator's tables still hold is shown (marked as reconstructed).",
+    "coverage": "The event list starts {from}; the associations come from the operator's own history and reach further back.",
     "truncated": "More events than one view shows; narrow the window.",
     "selected": "Selected",
     "noneSelected": "Select a node to see its associations. Press F to focus on it.",
@@ -353,6 +353,9 @@
       "event": "event",
       "sweep": "sweep",
       "unconfirmed": "unconfirmed"
-    }
+    },
+    "off": "The network view is off. While it is off the operator keeps 30 days of who could use this airdress, without addresses; turn it on to see it and keep 90 days.",
+    "turnOn": "Turn on the network view",
+    "since": "History recorded since {time}."
   }
 }

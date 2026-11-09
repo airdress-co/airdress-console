@@ -1,6 +1,6 @@
 // The network view's read (SPEC-189, proof of concept): GET /v1/admin/network
 // for a window, checked where it enters and turned into the renderer's model.
-import { useQuery } from '@tanstack/vue-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query';
 import { computed } from 'vue';
 import type { Ref } from 'vue';
 import type { Reader } from '@/api/guards.ts';
@@ -24,6 +24,8 @@ export interface NetworkRead {
   readonly detail: ReadonlyMap<string, string>;
   readonly eventsFrom: number | undefined;
   readonly eventsTruncated: boolean;
+  /** When the operator's recorded history begins: nothing earlier is known. */
+  readonly historyStartsAt: number | undefined;
 }
 
 function kindOf(r: Reader): Kind {
@@ -68,6 +70,7 @@ export function readNetwork(body: unknown): NetworkRead {
   })) as NetEvent[];
   const coverage = r.record('coverage');
   const eventsFrom = coverage.optString('events_from');
+  const historyStartsAt = coverage.optString('history_starts_at');
   return {
     network: {
       from: Date.parse(r.string('from')),
@@ -80,6 +83,7 @@ export function readNetwork(body: unknown): NetworkRead {
     detail,
     eventsFrom: eventsFrom === undefined ? undefined : Date.parse(eventsFrom),
     eventsTruncated: coverage.optBoolean('events_truncated') ?? false,
+    historyStartsAt: historyStartsAt === undefined ? undefined : Date.parse(historyStartsAt),
   };
 }
 
@@ -109,5 +113,18 @@ export function useNetwork(
       return readNetwork(await op.request(`${PATH}?${q.toString()}`));
     },
     enabled: computed(() => op.fqdn.value !== undefined),
+  });
+}
+
+const SETTINGS = '/v1/admin/network/settings';
+
+/** The owner turns the view on or off (SPEC-189 FR-46); the read refetches. */
+export function useNetworkSwitch(): ReturnType<typeof useMutation<unknown, Error, boolean>> {
+  const op = useOperator();
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (enabled: boolean): Promise<unknown> =>
+      op.request(SETTINGS, { method: 'PUT', body: JSON.stringify({ enabled }) }),
+    onSettled: () => client.invalidateQueries({ queryKey: operatorKeys.all(op.fqdn.value ?? '') }),
   });
 }
