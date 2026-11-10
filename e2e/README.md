@@ -13,7 +13,7 @@ npx playwright test --project=webkit e2e/console.spec.ts   # one browser, one fi
 
 ## What runs
 
-- **The operator** is the release `api/operator-openapi.pin` names (v0.1.164),
+- **The operator** is the release `api/operator-openapi.pin` names (v0.1.171),
   fetched from downloads.airdress.co and checked against the release
   manifest's SHA-256 by `e2e/fetch-operator.sh` (cached in
   `~/.cache/airdress-console-e2e/`). Set `AIRDRESS_OPERATOR_BIN` to use a

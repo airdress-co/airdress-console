@@ -609,6 +609,11 @@ export interface paths {
          *     people on this airdress (`kind: principal`); a group is refused
          *     `group_assignee_unsupported`. Numbers count per profile and are
          *     never reused. An RFI is created without its answer.
+         *     With `confirmDraft: <draft id>` it creates the item from an agent's
+         *     draft offered to the caller (FR-20): the draft is consumed and the
+         *     item's `source` names the caller as the person who confirmed it.
+         *     A draft that is not the caller's, has lapsed or was used answers
+         *     `410 work_draft_gone`.
          */
         post: operations["work_create_item"];
         delete?: never;
@@ -682,9 +687,38 @@ export interface paths {
          * Give an RFI its official answer
          * @description SPEC-182 FR-4. An assignee or the owner, once; the RFI becomes
          *     `answered`. `costImpact` and `scheduleImpact` are `none`,
-         *     `possible` or `yes`. A second answer is `409 answer_exists`.
+         *     `possible` or `yes`. A second answer is `409 answer_exists`. With
+         *     `confirmDraft`, the caller gives an answer draft offered to them for
+         *     this RFI (182-D.2); a lapsed, used or other person's draft is
+         *     `410 work_draft_gone`.
          */
         post: operations["work_answer_rfi"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/work/items/{id}/answer-draft": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Offer yourself a draft of an RFI's answer
+         * @description SPEC-182 182-D.2. What an assistant's `work_answer_draft` tool calls:
+         *     a draft of the official answer to an RFI the caller reads, offered to
+         *     the CALLER and nobody else. It is not an answer: the caller gives it
+         *     with `POST /v1/work/items/{id}/answer` and `confirmDraft`, which also
+         *     decides whether they may answer. Body: `text`, and optional
+         *     `costImpact` and `scheduleImpact` (`none`, the default, `possible` or
+         *     `yes`). The draft lapses after 24 hours.
+         */
+        post: operations["work_offer_answer_draft"];
         delete?: never;
         options?: never;
         head?: never;
@@ -730,6 +764,300 @@ export interface paths {
          *     `404`, as does someone taken off the item.
          */
         post: operations["work_open_conversation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/work/items/{id}/evidence": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Attach a photo to a work item as evidence
+         * @description SPEC-182 FR-2, FR-11 (182-C.3). The body is the image's bytes;
+         *     `Content-Type` declares `image/jpeg`, `image/png` or `image/webp`,
+         *     and the bytes decide. At most 65520 bytes: the attachment store's
+         *     bound, so a phone scales a photo down before attaching it. The
+         *     asker, an assignee or the owner may attach; a watcher or a grant
+         *     holder gets `403 work_item_forbidden`. The operator records the
+         *     SHA-256 of the bytes as received, their size, type, the optional
+         *     `capturedAt` and who attached them, and appends an `evidence` entry
+         *     to the history. Answers the item, the new entry last in `evidence`
+         *     (`{id, mediaType, sha256, bytes, capturedAt?, addedBy}`).
+         */
+        post: operations["work_add_evidence"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/work/items/{id}/evidence/{evidence}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * One evidence file's bytes
+         * @description SPEC-182 182-C.3. To anyone who reads the item; `Cache-Control:
+         *     private, no-store`, so a person taken off the item stops reading it.
+         *     The bytes are the ones whose SHA-256 the item records.
+         */
+        get: operations["work_get_evidence"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/work/items/{id}/at-site": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Say you are at a work item's site
+         * @description SPEC-182 FR-18, design D-11. Records one event,
+         *     `airdress.work.item.at_site`, in the caller's own audience, carrying
+         *     the item's id, profile and number and **no position**. The route
+         *     takes no body (or `{}`): any field is refused, so a coordinate has
+         *     nowhere to go. The app posts the "I'm at the site" message in the
+         *     item's thread itself. Anyone who reads the item may say it.
+         */
+        post: operations["work_at_site"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/work/place-sets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The place sets you may pick from
+         * @description SPEC-182 FR-16. `{"placeSets": [{"name"}]}`, sorted by name. The
+         *     owner sees every set; a person, those whose audience is `members`.
+         *     Names only: each set's places are read from
+         *     `/v1/work/places/{set}` under the same rule.
+         */
+        get: operations["work_list_place_sets"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/work/people": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The people you may assign
+         * @description SPEC-182 FR-11, FR-12. `{"people": [{"id", "displayName", "owner",
+         *     "active"}]}`, sorted by name: what `assignees` and `watchers` take.
+         *     The owner sees every active person. A person sees themselves, the
+         *     owner, the people they already share a work item with and those they
+         *     have a person-to-person thread with, so that a display name does not
+         *     become a directory (SPEC-042). A revoked person is listed with
+         *     `active: false` to whoever reads an item they were on, to keep the
+         *     record attributed by name; they cannot be assigned. Nothing else
+         *     about anyone.
+         */
+        get: operations["work_list_people"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/work/drafts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Offer yourself a work-item draft
+         * @description SPEC-182 182-D.2. What an assistant's `work_draft` tool calls: a draft
+         *     of a task or an RFI, offered to the CALLER and nobody else. No work
+         *     item exists until the caller creates it with `confirmDraft`. Fields
+         *     as the in-chat agent proposes them: `profile`, `title`, and optional
+         *     `assignee` (a display name), `due` (a date), `place`, `question`,
+         *     `references`, `proposedAnswer`.
+         */
+        post: operations["work_offer_draft"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/work/drafts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * An agent's draft offered to you
+         * @description SPEC-182 design D-12. A draft the in-chat agent offered the caller:
+         *     what it proposes, the fields it guessed (`inferred`) and when it
+         *     lapses. A draft is not a work item; it becomes one only when its
+         *     person creates it with `confirmDraft`. Anyone else's, or a lapsed
+         *     one, answers `404`.
+         */
+        get: operations["work_get_draft"];
+        put?: never;
+        post?: never;
+        /**
+         * Discard an agent's draft offered to you
+         * @description SPEC-182 design D-12. Discarding twice, or another person's draft, is
+         *     not an error and changes nothing.
+         */
+        delete: operations["work_discard_draft"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/voice/utterances": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Turn one utterance into text, and deliver it
+         * @description SPEC-183 FR-6, design D-1 to D-3. The pipeline is `meta.pipeline`,
+         *     or the default for `meta.scope`; it must be `Ready` at the moment of
+         *     the request. The speech member transcribes the audio; if it fails
+         *     and `meta.phoneTranscript` is set, that is used (`source: phone`).
+         *     A clean-up step, when declared, may polish the text, and a clean-up
+         *     that adds a number or a name, or rewrites it, is discarded
+         *     (`cleanup: rejected`). `deliver: agent` posts the text into
+         *     `meta.conversation`, the caller's agent conversation, as a message
+         *     from the caller with a `voice` block; `deliver: text` only returns
+         *     it. Audio is at most 4 MiB and 120 s, Ogg/Opus.
+         */
+        post: operations["voice_send_utterance"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/voice/languages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The caller's own spoken languages
+         * @description SPEC-183 FR-23, FR-24. The caller's language list, first choice
+         *     first, which routes their notes on a `per-person` pipeline, and the
+         *     clips counted towards languages not yet learned. Only ever the
+         *     caller's own: no route reads another person's, the owner's
+         *     included.
+         */
+        get: operations["voice_get_languages"];
+        /**
+         * Set the caller's own spoken languages
+         * @description SPEC-183 FR-24. Replaces the list (at most 8 language tags, no
+         *     repeats); the learning counts stay.
+         */
+        put: operations["voice_set_languages"];
+        post?: never;
+        /**
+         * Forget the caller's own spoken languages
+         * @description SPEC-183 FR-24. Deletes the list and the learning counts.
+         */
+        delete: operations["voice_delete_languages"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/work/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Export tasks, RFIs or a place set (owner)
+         * @description SPEC-182 FR-29, design D-14. Tasks as JSCalendar
+         *     (`profile=task&format=jscalendar`) or iCalendar VTODO
+         *     (`profile=task&format=ics`, RFC 10051 `FAILED`); RFIs as a BCF 3.0
+         *     archive (`profile=rfi&format=bcf`), the official answer as a comment
+         *     and the impacts as labels; a place set as GeoJSON
+         *     (`placeSet=<name>&format=geojson`). What a format could not carry is
+         *     listed in the `export-dropped` header, a JSON array of sentences. A
+         *     place's access text is never exported. The owner's alone.
+         */
+        get: operations["work_export"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/work/places/{set}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * A place set as GeoJSON
+         * @description SPEC-182 FR-16. A `PlaceSet` as an RFC 7946 FeatureCollection, one
+         *     feature per place, its id the place's name. To the owner, and to
+         *     every person when the set's audience is `members`; anyone else gets
+         *     the same `404` as for a set that does not exist. A set holds no
+         *     access text. Served until the geo plugin is installed.
+         */
+        get: operations["work_get_place_set"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -6615,6 +6943,61 @@ export interface operations {
                 };
                 content?: never;
             };
+            /** @description `work_draft_gone`. */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    work_offer_answer_draft: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The draft, as `GET /v1/work/drafts/{id}` reads it, with `answers` naming the RFI. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `work_item_bad_request`: not an RFI, or an empty answer. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `not_enabled` (`feature: work`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `work_item_not_found`: no such item, or not the caller's to read. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `answer_exists`. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
         };
     };
     work_get_history: {
@@ -6684,6 +7067,544 @@ export interface operations {
                 content?: never;
             };
             /** @description `work_item_not_found`. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    work_add_evidence: {
+        parameters: {
+            query?: {
+                /** @description When the device says the photo was taken (RFC 3339). */
+                capturedAt?: string;
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "image/jpeg": string;
+                "image/png": string;
+                "image/webp": string;
+            };
+        };
+        responses: {
+            /** @description The item, with the evidence appended. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `work_item_bad_request`: empty, or not the declared image type. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `not_enabled` (`feature: work`) or `work_item_forbidden`. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `work_item_not_found`: no such item, or not the caller's to read. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `work_evidence_too_large`. */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `work_item_invalid`: the item already holds 50 files. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    work_get_evidence: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                evidence: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The image, in its own media type. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `not_enabled` (`feature: work`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `work_item_not_found`: no such item or file, or not the caller's to read. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    work_at_site: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Recorded. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `work_item_bad_request`: the request carried a body. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `not_enabled` (`feature: work`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `work_item_not_found`: no such item, or not the caller's to read. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    work_list_place_sets: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `{"placeSets": [{"name": "sites"}]}`. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `not_enabled` (`feature: work`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    work_list_people: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `{"people": [{"id": "…", "displayName": "Ana", "owner": false, "active": true}]}`. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `not_enabled` (`feature: work`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    work_offer_draft: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The draft, as `GET /v1/work/drafts/{id}` reads it. */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `work_item_bad_request`: not a usable draft. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `not_enabled` (`feature: work`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    work_get_draft: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The draft. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `not_enabled` (`feature: work`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `work_item_not_found`. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    work_discard_draft: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Discarded. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `not_enabled` (`feature: work`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    voice_send_utterance: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /**
+                     * @description JSON: `{"pipeline": "<name>"}` or `{"scope":
+                     *     "command"|"dictation"}`, with optional `conversation`
+                     *     (uuid) and `phoneTranscript` (at most 8000 characters).
+                     */
+                    meta: string;
+                    /**
+                     * Format: binary
+                     * @description The utterance, Ogg/Opus.
+                     */
+                    audio: string;
+                };
+            };
+        };
+        responses: {
+            /**
+             * @description `{transcript, cleaned?, text, source, pipeline, scope, member,
+             *     model, deliver, cleanup, message?, timings: {audioMs, speechMs,
+             *     cleanupMs?, totalMs}}`. `cleanup` is `none`, `accepted`,
+             *     `rejected` or `failed`.
+             */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `voice_request_invalid` or `voice_conversation_required`. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `not_enabled` (`feature: voice`), or `voice_command_owner_only` for a sub-user's command (dictation is theirs). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `voice_pipeline_not_found`, or `not_found` for a conversation that is not the caller's. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `voice_pipeline_not_ready` (with the condition `reason`), `voice_conversation_not_agent` or `voice_delivery_unavailable`. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `voice_audio_too_large` (over 4 MiB) or `voice_audio_too_long` (over 120 s). */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `voice_audio_unsupported`: not Ogg/Opus. */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `voice_member_failed`: the speech member did not transcribe and no phone transcript was sent. */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    voice_get_languages: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `{"languages": ["es", "en"], "learning": {"tl": 2}}`. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `not_enabled` (`feature: voice`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    voice_set_languages: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    languages: string[];
+                };
+            };
+        };
+        responses: {
+            /** @description The list, as `GET` answers it. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `voice_request_invalid`, naming the position of a bad tag. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `not_enabled` (`feature: voice`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    voice_delete_languages: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Forgotten. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `not_enabled` (`feature: voice`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    work_export: {
+        parameters: {
+            query: {
+                profile?: "task" | "rfi";
+                format: "jscalendar" | "ics" | "bcf" | "geojson";
+                placeSet?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The export; `export-dropped` lists what it left out. */
+            200: {
+                headers: {
+                    /** @description What the format could not carry, as a JSON array of sentences. */
+                    "export-dropped"?: string;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `bad_request`: not one of the four exports. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `not_enabled` (`feature: work`), or `work_item_forbidden` for anyone but the owner. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `work_place_set_not_found`. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    work_get_place_set: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                set: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The FeatureCollection (`application/geo+json`). */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `not_enabled` (`feature: work`). */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description `work_place_set_not_found`. */
             404: {
                 headers: {
                     [name: string]: unknown;

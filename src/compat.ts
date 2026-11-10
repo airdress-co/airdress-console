@@ -20,9 +20,7 @@ export type Area =
 
 export const AREA_SINCE: Readonly<Record<Area, string>> = {
   overview: 'v0.1.113', // GET /v1/capabilities
-  // GET /v1/admin/network — proof of concept (SPEC-189): on the operator
-  // branch feat/network-view-poc, cut from v0.1.170; no release serves it yet.
-  network: 'v0.1.170',
+  network: 'v0.1.171', // GET /v1/admin/network, /v1/admin/network/settings (SPEC-189)
   people: 'v0.1.78', // /v1/admin/sub-users/{id}/publication-block
   devices: 'v0.1.9', // /v1/endpoints/enrollments/{id}
   machines: 'v0.1.72', // /v1/admin/machines/*
