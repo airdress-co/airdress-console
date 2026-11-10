@@ -114,7 +114,14 @@ test('the network area reads the operator and shows every arrangement', async ({
   // (One operator serves every browser project: a later one finds it on.)
   const turnOn = page.getByRole('button', { name: 'Turn on the network view' });
   await expect(page.getByText(/associations; \d+ events/).or(turnOn)).toBeVisible();
-  if (await turnOn.isVisible()) await turnOn.click();
+  if (await turnOn.isVisible()) {
+    // A destructive write: it asks first (SPEC-184 FR-40, amended 2026-11-10).
+    await turnOn.click();
+    await page
+      .getByRole('dialog')
+      .getByRole('button', { name: 'Turn on the network view' })
+      .click();
+  }
   await expect(page.getByText(/associations; \d+ events/)).toBeVisible();
 
   // The projector runs on its own clock: reopen until it has drawn the week.
