@@ -356,6 +356,8 @@
     },
     "off": "Die Netzwerkansicht ist aus. Solange sie aus ist, bewahrt der Operator 30 Tage auf, wer diese Airdress nutzen konnte, ohne Adressen; schalte sie ein, um das zu sehen und 90 Tage aufzubewahren.",
     "turnOn": "Netzwerkansicht einschalten",
+    "confirmOnTitle": "Netzwerkansicht einschalten?",
+    "confirmOnBody": "Der Operator bewahrt dann 90 Tage auf, wer diese Airdress nutzen konnte, mit Adressen, und zeigt es hier. Schaltest du sie später wieder aus, sind es nur noch 30 Tage.",
     "since": "Verlauf aufgezeichnet seit {time}."
   }
 }

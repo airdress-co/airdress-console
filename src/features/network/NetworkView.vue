@@ -6,12 +6,15 @@
 import { computed, ref, shallowRef, useTemplateRef, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import AreaFrame from '@/components/AreaFrame.vue';
+import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import ErrorNotice from '@/components/ErrorNotice.vue';
 import NetworkCanvas from './NetworkCanvas.vue';
 import { HttpError } from '@/api/errors.ts';
 import { useNetwork, useNetworkSwitch, windowOf } from './api.ts';
 import type { WindowName } from './api.ts';
 import { layout, PRESETS } from './layout.ts';
+import { useStepUp } from '@/operator/step-up.ts';
+import type { PendingAction } from '@/operator/step-up.ts';
 import type { Positions, Preset } from './layout.ts';
 
 const { t, locale } = useI18n();
@@ -24,6 +27,30 @@ const toggle = useNetworkSwitch();
 const switchedOff = computed(
   () => query.error.value instanceof HttpError && query.error.value.code === 'not_enabled',
 );
+// Switching the view is a destructive write (SPEC-184 FR-40, amended
+// 2026-11-10): it asks first, and an old sign-in is refreshed (FR-42).
+const stepUp = useStepUp();
+const resumed = stepUp.resume('network');
+const confirming = ref(resumed !== undefined);
+const wasResumed = ref(resumed !== undefined);
+const turnOnAction: PendingAction = {
+  area: 'network',
+  op: 'enable',
+  target: 'network',
+  label: 'network',
+};
+function askTurnOn(): void {
+  wasResumed.value = false;
+  confirming.value = true;
+}
+async function confirmTurnOn(): Promise<void> {
+  try {
+    await stepUp.run(turnOnAction, () => toggle.mutateAsync(true));
+    confirming.value = false;
+  } catch {
+    // Shown from `toggle.error`; a step-up has already redirected.
+  }
+}
 const preset = ref<Preset>('groups');
 const view = ref<'graph' | 'table'>('graph');
 const canvas = useTemplateRef<InstanceType<typeof NetworkCanvas>>('canvas');
@@ -161,7 +188,7 @@ function focusSelected(): void {
 
     <section v-if="switchedOff" class="off">
       <p>{{ t('network.off') }}</p>
-      <button type="button" :disabled="toggle.isPending.value" @click="toggle.mutate(true)">
+      <button type="button" :disabled="toggle.isPending.value" @click="askTurnOn">
         {{ t('network.turnOn') }}
       </button>
       <ErrorNotice v-if="toggle.error.value !== null" :error="toggle.error.value" />
@@ -247,6 +274,16 @@ function focusSelected(): void {
         </table>
       </section>
     </template>
+    <ConfirmDialog
+      v-model:open="confirming"
+      :resumed="wasResumed ? 'confirm' : 'none'"
+      :title="t('network.confirmOnTitle')"
+      :confirm-label="t('network.turnOn')"
+      :busy="toggle.isPending.value"
+      @confirm="confirmTurnOn"
+    >
+      <p>{{ t('network.confirmOnBody') }}</p>
+    </ConfirmDialog>
   </AreaFrame>
 </template>
 

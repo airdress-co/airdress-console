@@ -356,6 +356,8 @@
     },
     "off": "The network view is off. While it is off the operator keeps 30 days of who could use this airdress, without addresses; turn it on to see it and keep 90 days.",
     "turnOn": "Turn on the network view",
+    "confirmOnTitle": "Turn on the network view?",
+    "confirmOnBody": "The operator then keeps 90 days of who could use this airdress, with addresses, and shows it here. Turning it off again later shortens that to 30 days.",
     "since": "History recorded since {time}."
   }
 }
