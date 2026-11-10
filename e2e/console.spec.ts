@@ -9,7 +9,7 @@ import {
   STEP_UP_MAX_AGE_SECS,
 } from './harness/env.ts';
 
-// SPEC-184 184-D.13: the console against a real airdress-operator (v0.1.164)
+// SPEC-184 184-D.13: the console against a real airdress-operator (v0.1.171)
 // and a stand-in for the hub's authorization server, in Chromium, Firefox
 // and WebKit. One operator serves every test, so names carry the browser.
 
@@ -38,7 +38,7 @@ test('signs in, lists the airdress, reads the operator, and keeps tokens and req
   page.on('request', (request) => requests.push(request));
 
   await signIn(page);
-  await expect(page.getByText('v0.1.164')).toBeVisible();
+  await expect(page.getByText('v0.1.171')).toBeVisible();
   await expect(page.getByText('Serving')).toBeVisible();
 
   for (const area of ['People', 'Devices', 'Machines', 'Grants', 'Functions']) {

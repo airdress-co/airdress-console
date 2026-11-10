@@ -69,6 +69,12 @@ tags:
       owner, and by nobody else; it is a company record, not end to end.
       Every route answers `403 not_enabled` (`feature: work`) while the
       `work` switch is off.
+  - name: voice
+    description: |
+      SPEC-183 — a person's voice to their own airdress: an utterance in,
+      the final transcript out, through the owner's `VoicePipeline`. The
+      audio is held in memory only and never logged. Every route answers
+      `403 not_enabled` (`feature: voice`) while the `voice` switch is off.
   - name: shells
     description: |
       SPEC-137 — interactive sessions on a person's own machine, from that
@@ -3036,6 +3042,11 @@ paths:
         people on this airdress (`kind: principal`); a group is refused
         `group_assignee_unsupported`. Numbers count per profile and are
         never reused. An RFI is created without its answer.
+        With `confirmDraft: <draft id>` it creates the item from an agent's
+        draft offered to the caller (FR-20): the draft is consumed and the
+        item's `source` names the caller as the person who confirmed it.
+        A draft that is not the caller's, has lapsed or was used answers
+        `410 work_draft_gone`.
       tags: [work]
       security:
         - ownerAuth: []
@@ -3150,7 +3161,10 @@ paths:
       description: |
         SPEC-182 FR-4. An assignee or the owner, once; the RFI becomes
         `answered`. `costImpact` and `scheduleImpact` are `none`,
-        `possible` or `yes`. A second answer is `409 answer_exists`.
+        `possible` or `yes`. A second answer is `409 answer_exists`. With
+        `confirmDraft`, the caller gives an answer draft offered to them for
+        this RFI (182-D.2); a lapsed, used or other person's draft is
+        `410 work_draft_gone`.
       tags: [work]
       security:
         - ownerAuth: []
@@ -3166,6 +3180,41 @@ paths:
           description: The answered RFI.
         '403':
           description: '`not_enabled` (`feature: work`), `work_item_forbidden` or `work_transition_refused`.'
+        '404':
+          description: '`work_item_not_found`: no such item, or not the caller''s to read.'
+        '409':
+          description: '`answer_exists`.'
+        '410':
+          description: '`work_draft_gone`.'
+  /v1/work/items/{id}/answer-draft:
+    post:
+      operationId: work_offer_answer_draft
+      summary: Offer yourself a draft of an RFI's answer
+      description: |
+        SPEC-182 182-D.2. What an assistant's `work_answer_draft` tool calls:
+        a draft of the official answer to an RFI the caller reads, offered to
+        the CALLER and nobody else. It is not an answer: the caller gives it
+        with `POST /v1/work/items/{id}/answer` and `confirmDraft`, which also
+        decides whether they may answer. Body: `text`, and optional
+        `costImpact` and `scheduleImpact` (`none`, the default, `possible` or
+        `yes`). The draft lapses after 24 hours.
+      tags: [work]
+      security:
+        - ownerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '201':
+          description: The draft, as `GET /v1/work/drafts/{id}` reads it, with `answers` naming the RFI.
+        '400':
+          description: '`work_item_bad_request`: not an RFI, or an empty answer.'
+        '403':
+          description: '`not_enabled` (`feature: work`).'
         '404':
           description: '`work_item_not_found`: no such item, or not the caller''s to read.'
         '409':
@@ -3223,6 +3272,420 @@ paths:
           description: '`not_enabled` (`feature: work`).'
         '404':
           description: '`work_item_not_found`.'
+  /v1/work/items/{id}/evidence:
+    post:
+      operationId: work_add_evidence
+      summary: Attach a photo to a work item as evidence
+      description: |
+        SPEC-182 FR-2, FR-11 (182-C.3). The body is the image's bytes;
+        `Content-Type` declares `image/jpeg`, `image/png` or `image/webp`,
+        and the bytes decide. At most 65520 bytes: the attachment store's
+        bound, so a phone scales a photo down before attaching it. The
+        asker, an assignee or the owner may attach; a watcher or a grant
+        holder gets `403 work_item_forbidden`. The operator records the
+        SHA-256 of the bytes as received, their size, type, the optional
+        `capturedAt` and who attached them, and appends an `evidence` entry
+        to the history. Answers the item, the new entry last in `evidence`
+        (`{id, mediaType, sha256, bytes, capturedAt?, addedBy}`).
+      tags: [work]
+      security:
+        - ownerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: capturedAt
+          in: query
+          description: When the device says the photo was taken (RFC 3339).
+          schema:
+            type: string
+            format: date-time
+      requestBody:
+        required: true
+        content:
+          image/jpeg:
+            schema: { type: string, format: binary }
+          image/png:
+            schema: { type: string, format: binary }
+          image/webp:
+            schema: { type: string, format: binary }
+      responses:
+        '201':
+          description: The item, with the evidence appended.
+        '400':
+          description: '`work_item_bad_request`: empty, or not the declared image type.'
+        '403':
+          description: '`not_enabled` (`feature: work`) or `work_item_forbidden`.'
+        '404':
+          description: '`work_item_not_found`: no such item, or not the caller''s to read.'
+        '413':
+          description: '`work_evidence_too_large`.'
+        '422':
+          description: '`work_item_invalid`: the item already holds 50 files.'
+  /v1/work/items/{id}/evidence/{evidence}:
+    get:
+      operationId: work_get_evidence
+      summary: One evidence file's bytes
+      description: |
+        SPEC-182 182-C.3. To anyone who reads the item; `Cache-Control:
+        private, no-store`, so a person taken off the item stops reading it.
+        The bytes are the ones whose SHA-256 the item records.
+      tags: [work]
+      security:
+        - ownerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: evidence
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: The image, in its own media type.
+        '403':
+          description: '`not_enabled` (`feature: work`).'
+        '404':
+          description: '`work_item_not_found`: no such item or file, or not the caller''s to read.'
+  /v1/work/items/{id}/at-site:
+    post:
+      operationId: work_at_site
+      summary: Say you are at a work item's site
+      description: |
+        SPEC-182 FR-18, design D-11. Records one event,
+        `airdress.work.item.at_site`, in the caller's own audience, carrying
+        the item's id, profile and number and **no position**. The route
+        takes no body (or `{}`): any field is refused, so a coordinate has
+        nowhere to go. The app posts the "I'm at the site" message in the
+        item's thread itself. Anyone who reads the item may say it.
+      tags: [work]
+      security:
+        - ownerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Recorded.
+        '400':
+          description: '`work_item_bad_request`: the request carried a body.'
+        '403':
+          description: '`not_enabled` (`feature: work`).'
+        '404':
+          description: '`work_item_not_found`: no such item, or not the caller''s to read.'
+  /v1/work/place-sets:
+    get:
+      operationId: work_list_place_sets
+      summary: The place sets you may pick from
+      description: |
+        SPEC-182 FR-16. `{"placeSets": [{"name"}]}`, sorted by name. The
+        owner sees every set; a person, those whose audience is `members`.
+        Names only: each set's places are read from
+        `/v1/work/places/{set}` under the same rule.
+      tags: [work]
+      security:
+        - ownerAuth: []
+      responses:
+        '200':
+          description: '`{"placeSets": [{"name": "sites"}]}`.'
+        '403':
+          description: '`not_enabled` (`feature: work`).'
+  /v1/work/people:
+    get:
+      operationId: work_list_people
+      summary: The people you may assign
+      description: |
+        SPEC-182 FR-11, FR-12. `{"people": [{"id", "displayName", "owner",
+        "active"}]}`, sorted by name: what `assignees` and `watchers` take.
+        The owner sees every active person. A person sees themselves, the
+        owner, the people they already share a work item with and those they
+        have a person-to-person thread with, so that a display name does not
+        become a directory (SPEC-042). A revoked person is listed with
+        `active: false` to whoever reads an item they were on, to keep the
+        record attributed by name; they cannot be assigned. Nothing else
+        about anyone.
+      tags: [work]
+      security:
+        - ownerAuth: []
+      responses:
+        '200':
+          description: '`{"people": [{"id": "…", "displayName": "Ana", "owner": false, "active": true}]}`.'
+        '403':
+          description: '`not_enabled` (`feature: work`).'
+  /v1/work/drafts:
+    post:
+      operationId: work_offer_draft
+      summary: Offer yourself a work-item draft
+      description: |
+        SPEC-182 182-D.2. What an assistant's `work_draft` tool calls: a draft
+        of a task or an RFI, offered to the CALLER and nobody else. No work
+        item exists until the caller creates it with `confirmDraft`. Fields
+        as the in-chat agent proposes them: `profile`, `title`, and optional
+        `assignee` (a display name), `due` (a date), `place`, `question`,
+        `references`, `proposedAnswer`.
+      tags: [work]
+      security:
+        - ownerAuth: []
+      responses:
+        '201':
+          description: The draft, as `GET /v1/work/drafts/{id}` reads it.
+        '400':
+          description: '`work_item_bad_request`: not a usable draft.'
+        '403':
+          description: '`not_enabled` (`feature: work`).'
+  /v1/work/drafts/{id}:
+    get:
+      operationId: work_get_draft
+      summary: An agent's draft offered to you
+      description: |
+        SPEC-182 design D-12. A draft the in-chat agent offered the caller:
+        what it proposes, the fields it guessed (`inferred`) and when it
+        lapses. A draft is not a work item; it becomes one only when its
+        person creates it with `confirmDraft`. Anyone else's, or a lapsed
+        one, answers `404`.
+      tags: [work]
+      security:
+        - ownerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: The draft.
+        '403':
+          description: '`not_enabled` (`feature: work`).'
+        '404':
+          description: '`work_item_not_found`.'
+    delete:
+      operationId: work_discard_draft
+      summary: Discard an agent's draft offered to you
+      description: |
+        SPEC-182 design D-12. Discarding twice, or another person's draft, is
+        not an error and changes nothing.
+      tags: [work]
+      security:
+        - ownerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Discarded.
+        '403':
+          description: '`not_enabled` (`feature: work`).'
+  /v1/voice/utterances:
+    post:
+      operationId: voice_send_utterance
+      summary: Turn one utterance into text, and deliver it
+      description: |
+        SPEC-183 FR-6, design D-1 to D-3. The pipeline is `meta.pipeline`,
+        or the default for `meta.scope`; it must be `Ready` at the moment of
+        the request. The speech member transcribes the audio; if it fails
+        and `meta.phoneTranscript` is set, that is used (`source: phone`).
+        A clean-up step, when declared, may polish the text, and a clean-up
+        that adds a number or a name, or rewrites it, is discarded
+        (`cleanup: rejected`). `deliver: agent` posts the text into
+        `meta.conversation`, the caller's agent conversation, as a message
+        from the caller with a `voice` block; `deliver: text` only returns
+        it. Audio is at most 4 MiB and 120 s, Ogg/Opus.
+      tags: [voice]
+      security:
+        - ownerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [meta, audio]
+              properties:
+                meta:
+                  type: string
+                  description: |
+                    JSON: `{"pipeline": "<name>"}` or `{"scope":
+                    "command"|"dictation"}`, with optional `conversation`
+                    (uuid) and `phoneTranscript` (at most 8000 characters).
+                audio:
+                  type: string
+                  format: binary
+                  description: The utterance, Ogg/Opus.
+      responses:
+        '200':
+          description: |
+            `{transcript, cleaned?, text, source, pipeline, scope, member,
+            model, deliver, cleanup, message?, timings: {audioMs, speechMs,
+            cleanupMs?, totalMs}}`. `cleanup` is `none`, `accepted`,
+            `rejected` or `failed`.
+        '400':
+          description: '`voice_request_invalid` or `voice_conversation_required`.'
+        '403':
+          description: '`not_enabled` (`feature: voice`), or `voice_command_owner_only` for a sub-user''s command (dictation is theirs).'
+        '404':
+          description: '`voice_pipeline_not_found`, or `not_found` for a conversation that is not the caller''s.'
+        '409':
+          description: '`voice_pipeline_not_ready` (with the condition `reason`), `voice_conversation_not_agent` or `voice_delivery_unavailable`.'
+        '413':
+          description: '`voice_audio_too_large` (over 4 MiB) or `voice_audio_too_long` (over 120 s).'
+        '415':
+          description: '`voice_audio_unsupported`: not Ogg/Opus.'
+        '502':
+          description: '`voice_member_failed`: the speech member did not transcribe and no phone transcript was sent.'
+
+  /v1/voice/languages:
+    get:
+      operationId: voice_get_languages
+      summary: The caller's own spoken languages
+      description: |
+        SPEC-183 FR-23, FR-24. The caller's language list, first choice
+        first, which routes their notes on a `per-person` pipeline, and the
+        clips counted towards languages not yet learned. Only ever the
+        caller's own: no route reads another person's, the owner's
+        included.
+      tags: [voice]
+      security:
+        - ownerAuth: []
+      responses:
+        '200':
+          description: '`{"languages": ["es", "en"], "learning": {"tl": 2}}`.'
+        '403':
+          description: '`not_enabled` (`feature: voice`).'
+    put:
+      operationId: voice_set_languages
+      summary: Set the caller's own spoken languages
+      description: |
+        SPEC-183 FR-24. Replaces the list (at most 8 language tags, no
+        repeats); the learning counts stay.
+      tags: [voice]
+      security:
+        - ownerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [languages]
+              additionalProperties: false
+              properties:
+                languages:
+                  type: array
+                  maxItems: 8
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: The list, as `GET` answers it.
+        '400':
+          description: '`voice_request_invalid`, naming the position of a bad tag.'
+        '403':
+          description: '`not_enabled` (`feature: voice`).'
+    delete:
+      operationId: voice_delete_languages
+      summary: Forget the caller's own spoken languages
+      description: |
+        SPEC-183 FR-24. Deletes the list and the learning counts.
+      tags: [voice]
+      security:
+        - ownerAuth: []
+      responses:
+        '204':
+          description: Forgotten.
+        '403':
+          description: '`not_enabled` (`feature: voice`).'
+
+  /v1/work/export:
+    get:
+      operationId: work_export
+      summary: Export tasks, RFIs or a place set (owner)
+      description: |
+        SPEC-182 FR-29, design D-14. Tasks as JSCalendar
+        (`profile=task&format=jscalendar`) or iCalendar VTODO
+        (`profile=task&format=ics`, RFC 10051 `FAILED`); RFIs as a BCF 3.0
+        archive (`profile=rfi&format=bcf`), the official answer as a comment
+        and the impacts as labels; a place set as GeoJSON
+        (`placeSet=<name>&format=geojson`). What a format could not carry is
+        listed in the `export-dropped` header, a JSON array of sentences. A
+        place's access text is never exported. The owner's alone.
+      tags: [work]
+      security:
+        - ownerAuth: []
+      parameters:
+        - name: profile
+          in: query
+          schema:
+            type: string
+            enum: [task, rfi]
+        - name: format
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [jscalendar, ics, bcf, geojson]
+        - name: placeSet
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The export; `export-dropped` lists what it left out.
+          headers:
+            export-dropped:
+              description: What the format could not carry, as a JSON array of sentences.
+              schema:
+                type: string
+        '400':
+          description: '`bad_request`: not one of the four exports.'
+        '403':
+          description: '`not_enabled` (`feature: work`), or `work_item_forbidden` for anyone but the owner.'
+        '404':
+          description: '`work_place_set_not_found`.'
+  /v1/work/places/{set}:
+    get:
+      operationId: work_get_place_set
+      summary: A place set as GeoJSON
+      description: |
+        SPEC-182 FR-16. A `PlaceSet` as an RFC 7946 FeatureCollection, one
+        feature per place, its id the place's name. To the owner, and to
+        every person when the set's audience is `members`; anyone else gets
+        the same `404` as for a set that does not exist. A set holds no
+        access text. Served until the geo plugin is installed.
+      tags: [work]
+      security:
+        - ownerAuth: []
+      parameters:
+        - name: set
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The FeatureCollection (`application/geo+json`).
+        '403':
+          description: '`not_enabled` (`feature: work`).'
+        '404':
+          description: '`work_place_set_not_found`.'
   /v1/shells:
     get:
       operationId: shells_list

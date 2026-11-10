@@ -1,5 +1,5 @@
-// The network view's proof of concept (SPEC-189): a real operator built with
-// GET /v1/admin/network, a household seeded into its database, and the
+// The network view (SPEC-189): a real operator (v0.1.171, the first release
+// serving GET /v1/admin/network), a household seeded into its database, and the
 // console's Network area read through it in every arrangement. Screenshots
 // go to spike/results/poc-*.png for review.
 import { execFileSync } from 'node:child_process';
