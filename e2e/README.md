@@ -8,6 +8,7 @@ airdress-operator** and a stand-in for the hub's OAuth authorization server
 
 ```sh
 npm run e2e                     # fetches the pinned operator release if needed
+E2E_BUILD=1 npm run e2e         # the production build under security-headers.json (what CI runs)
 npx playwright test --project=webkit e2e/console.spec.ts   # one browser, one file
 ```
 
@@ -26,9 +27,16 @@ npx playwright test --project=webkit e2e/console.spec.ts   # one browser, one fi
   dependencies) mints `at+jwt` tokens with exactly the claims of the
   operator's own `tests/common/hub_as.rs`, consents at once, rotates refresh
   tokens and lists the one airdress at `/api/airdresses`.
-- **The console** is the Vite dev server, with `VITE_AUTH_ISSUER` and
-  `VITE_E2E_OPERATOR_ORIGIN` pointing it at the two. A published build sets
-  neither.
+- **The console** is the Vite dev server, with `VITE_AUTH_ISSUER`,
+  `VITE_E2E_OPERATOR_ORIGIN` and `VITE_AIRDRESS_ZONE` pointing it at the
+  harness. A published build sets none of them. With `E2E_BUILD=1` it is
+  instead the production build served by `vite preview` with the headers in
+  `security-headers.json`, `connect-src` pointed at the harness and the
+  Trusted Types rules (report-only in production) enforced; any refusal the
+  browser logs fails the test. WebKit's own `<select>` asks for an inline
+  stylesheet, which `style-src 'self'` refuses on any page, ours or not
+  (measured on a bare page, 2026-11-11): that one message is tolerated in
+  WebKit only.
 
 ## What is checked
 

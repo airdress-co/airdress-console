@@ -193,3 +193,30 @@ test('a destructive write after the step-up window signs in again and then compl
   await expect(page.getByText(`${name} was removed.`)).toBeVisible();
   await expect(page.getByRole('row', { name: new RegExp(name) })).toHaveCount(0);
 });
+
+test('the production build runs under the security headers it ships with (FR-5)', async ({
+  page,
+}) => {
+  test.skip(process.env['E2E_BUILD'] !== '1', 'only the production build is served with them');
+  const response = await page.goto('/');
+  const csp = response?.headers()['content-security-policy'] ?? '';
+  expect(csp).toContain("script-src 'self'");
+  expect(csp).toContain("require-trusted-types-for 'script'");
+  // Where the browser has Trusted Types, a raw HTML sink is refused: the
+  // policy is enforced, not only present.
+  // On a page of its own: the refusal it provokes is meant, and the
+  // fixture fails a test on any refusal it hears from `page`.
+  const probe = await page.context().newPage();
+  await probe.goto('/');
+  const refused = await probe.evaluate(() => {
+    if (!('trustedTypes' in window)) return 'unsupported';
+    try {
+      document.createElement('div').innerHTML = '<b>x</b>';
+      return 'allowed';
+    } catch {
+      return 'refused';
+    }
+  });
+  await probe.close();
+  expect(['refused', 'unsupported']).toContain(refused);
+});

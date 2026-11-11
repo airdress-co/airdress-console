@@ -14,6 +14,11 @@ function consoleVersion(): string {
   return fromEnv !== undefined && fromEnv !== '' ? fromEnv : '0.0.0-dev';
 }
 
+function previewHeaders(): Record<string, string> {
+  const raw = process.env['E2E_SECURITY_HEADERS'];
+  return raw === undefined || raw === '' ? {} : (JSON.parse(raw) as Record<string, string>);
+}
+
 // Every release is served under its own immutable prefix (/v/<semver>/), so
 // asset URLs are relative and the build never assumes where it lives.
 export default defineConfig({
@@ -36,6 +41,12 @@ export default defineConfig({
     __INTLIFY_PROD_DEVTOOLS__: 'false',
     __VUE_I18N_FULL_INSTALL__: 'false',
     __VUE_I18N_LEGACY_API__: 'false',
+  },
+  // Only the end-to-end suite's production mode sets this (E2E_BUILD=1 in
+  // playwright.config.ts): the build is served with the security headers
+  // console.airdress.co sends, so the policy is tested, not assumed.
+  preview: {
+    headers: previewHeaders(),
   },
   build: {
     target: 'es2022',

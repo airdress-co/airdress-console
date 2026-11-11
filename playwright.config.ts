@@ -1,4 +1,4 @@
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { defineConfig, devices } from '@playwright/test';
@@ -35,6 +35,43 @@ if (existsSync(webkitLibs)) {
     .join(':');
 }
 
+// E2E_BUILD=1: the production build under console.airdress.co's own security
+// headers (security-headers.json), not the dev server, which sends none. Two
+// changes, both for the harness: connect-src names the harness's servers
+// instead of account.airdress.co and the airdress zone, and the Trusted Types
+// rules that ship report-only are enforced, so a sink fails the test.
+const productionMode = process.env['E2E_BUILD'] === '1';
+
+function harnessHeaders(): Record<string, string> {
+  const file = JSON.parse(readFileSync('security-headers.json', 'utf8')) as Record<string, string>;
+  const csp = file['Content-Security-Policy'] ?? '';
+  const trustedTypes = (file['Content-Security-Policy-Report-Only'] ?? '')
+    .split(';')
+    .map((d) => d.trim())
+    .filter((d) => d.startsWith('require-trusted-types-for') || d.startsWith('trusted-types'));
+  const enforced = csp
+    .split(';')
+    .map((d) => d.trim())
+    .map((d) =>
+      d.startsWith('connect-src') ? `connect-src 'self' ${AS_ORIGIN} ${OPERATOR_ORIGIN}` : d,
+    )
+    .concat(trustedTypes)
+    .join('; ');
+  const headers: Record<string, string> = {};
+  for (const [name, value] of Object.entries(file)) {
+    if (!name.startsWith('$') && name !== 'Content-Security-Policy-Report-Only')
+      headers[name] = value;
+  }
+  headers['Content-Security-Policy'] = enforced;
+  return headers;
+}
+
+const buildEnv = {
+  VITE_AUTH_ISSUER: AS_ORIGIN,
+  VITE_E2E_OPERATOR_ORIGIN: OPERATOR_ORIGIN,
+  VITE_AIRDRESS_ZONE: 'e2e.test',
+};
+
 export default defineConfig({
   testDir: 'e2e',
   testMatch: '*.spec.ts',
@@ -70,16 +107,23 @@ export default defineConfig({
       },
     },
   ],
-  webServer: {
-    // The dev server: it handles /callback directly (CONTRIBUTING.md, "The
-    // callback contract"). The two VITE_ origins point the console at the
-    // harness; a published build sets neither.
-    command: `npx vite --host 127.0.0.1 --port ${String(CONSOLE_PORT)} --strictPort`,
-    url: CONSOLE_ORIGIN,
-    reuseExistingServer: false,
-    env: {
-      VITE_AUTH_ISSUER: AS_ORIGIN,
-      VITE_E2E_OPERATOR_ORIGIN: OPERATOR_ORIGIN,
-    },
-  },
+  webServer: productionMode
+    ? {
+        // Built as a release is, served with its headers. /callback falls back
+        // to the entry, which the build reads like the dev server's.
+        command: `npx vite build --outDir dist-e2e --emptyOutDir && npx vite preview --outDir dist-e2e --host 127.0.0.1 --port ${String(CONSOLE_PORT)} --strictPort`,
+        url: CONSOLE_ORIGIN,
+        reuseExistingServer: false,
+        timeout: 180_000,
+        env: { ...buildEnv, E2E_SECURITY_HEADERS: JSON.stringify(harnessHeaders()) },
+      }
+    : {
+        // The dev server: it handles /callback directly (CONTRIBUTING.md, "The
+        // callback contract"). The VITE_ values point the console at the
+        // harness; a published build sets none of them.
+        command: `npx vite --host 127.0.0.1 --port ${String(CONSOLE_PORT)} --strictPort`,
+        url: CONSOLE_ORIGIN,
+        reuseExistingServer: false,
+        env: buildEnv,
+      },
 });

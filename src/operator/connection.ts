@@ -2,7 +2,13 @@ import type { Fetch } from '@/api/http.ts';
 import { publicRequest } from '@/api/http.ts';
 import { HttpError, isNetworkFailure } from '@/api/errors.ts';
 import { isRecord } from '@/api/guards.ts';
-import { CONSOLE_SCOPE, operatorOrigin, operatorResource } from '@/config.ts';
+import {
+  CONSOLE_SCOPE,
+  airdressZone,
+  inAirdressZone,
+  operatorOrigin,
+  operatorResource,
+} from '@/config.ts';
 
 /** The operator a resource names: `https://<fqdn>/v1` → `<fqdn>`. */
 export function fqdnOf(resource: string | undefined): string | undefined {
@@ -15,6 +21,7 @@ export const RESOURCE_METADATA_PATH = '/.well-known/oauth-protected-resource/v1'
 
 /** Why an operator cannot be connected to, in the words the UI shows. */
 export type ConnectRefusal =
+  | 'outside_zone'
   | 'unreachable'
   | 'not_admitted'
   | 'no_metadata'
@@ -55,9 +62,17 @@ async function whyNoAnswer(fetchImpl: Fetch, fqdn: string): Promise<ConnectRefus
  * FR-17: before any token goes to an operator given by address, its RFC 9728
  * document for `/v1` must name exactly this resource and the hub as its
  * authorization server, and list the console's scope. An operator older
- * than the console's routes publishes no document (`no_metadata`).
+ * than the console's routes publishes no document (`no_metadata`). A name
+ * outside the airdress zone is refused first, without a request: the hub
+ * would not sign in to it, and the console's CSP would not let it be asked.
  */
-export async function checkOperator(fetchImpl: Fetch, fqdn: string, issuer: string): Promise<void> {
+export async function checkOperator(
+  fetchImpl: Fetch,
+  fqdn: string,
+  issuer: string,
+  zone: string = airdressZone(),
+): Promise<void> {
+  if (!inAirdressZone(fqdn, zone)) throw new ConnectRefusedError('outside_zone');
   let doc: unknown;
   try {
     doc = await publicRequest(fetchImpl, `${operatorOrigin(fqdn)}${RESOURCE_METADATA_PATH}`);

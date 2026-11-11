@@ -11,6 +11,7 @@ export default defineConfig(
   {
     ignores: [
       'dist/**',
+      'dist-e2e/**',
       'build-meta/**',
       'node_modules/**',
       'coverage/**',

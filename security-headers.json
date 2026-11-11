@@ -1,0 +1,6 @@
+{
+  "$comment": "The console's security headers as served at console.airdress.co. airdress-ops infra/tofu/environments/production/console.tf sends exactly these; `just console-csp-check` there compares this file, the tofu and the live answer. The end-to-end suite serves the production build under them (E2E_BUILD=1), with connect-src pointed at the harness and Trusted Types enforced.",
+  "Content-Security-Policy": "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://account.airdress.co https://*.a.airdr.es; manifest-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; report-uri /_reports/csp; report-to csp",
+  "Content-Security-Policy-Report-Only": "require-trusted-types-for 'script'; trusted-types vue; report-uri /_reports/csp; report-to csp",
+  "Reporting-Endpoints": "csp=\"/_reports/csp\""
+}
