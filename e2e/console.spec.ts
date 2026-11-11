@@ -73,6 +73,34 @@ test('signs in, lists the airdress, reads the operator, and keeps tokens and req
   expect(foreign).toEqual([]);
 });
 
+test('a reload comes back signed in, to the same area, and sign-out ends that (FR-13)', async ({
+  page,
+}) => {
+  await signIn(page);
+  await page.getByRole('navigation').getByRole('link', { name: 'Machines' }).click();
+  await expect(page.getByRole('heading', { name: 'Machines', level: 1 })).toBeVisible();
+
+  // The tokens went with the page; the hub's session did not, so the sign-in
+  // comes straight back without anything to answer.
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Machines', level: 1 })).toBeVisible();
+  await expect(page.getByText(OPERATOR_FQDN)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Sign in', exact: true })).toHaveCount(0);
+
+  // A second tab holds its own grant; signing out in the first ends it too.
+  const other = await page.context().newPage();
+  await signIn(other);
+
+  await page.getByRole('button', { name: 'Sign out' }).click();
+  await expect(page.getByRole('button', { name: 'Sign in', exact: true })).toBeVisible();
+  await expect(other.getByRole('button', { name: 'Sign in', exact: true })).toBeVisible();
+  for (const tab of [page, other]) {
+    await tab.reload();
+    await expect(tab.getByRole('button', { name: 'Sign in', exact: true })).toBeVisible();
+  }
+  await other.close();
+});
+
 test('the operator holds the line on console tokens, as a browser sees it (AC-5, R7)', async ({
   page,
 }) => {

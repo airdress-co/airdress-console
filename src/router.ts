@@ -73,7 +73,8 @@ export function sessionTarget(
 
 /**
  * Every area needs a session: tokens live in memory only (FR-13), so a
- * reload lands on connect and a sign-in brings the person back. Installed by
+ * reload starts the sign-in again before the app mounts (`Session.resume`),
+ * and lands on connect only when there was nothing to resume. Installed by
  * the app shell, which also re-checks the route it mounted on.
  */
 export function installSessionGuard(router: Router, session: Session): void {
