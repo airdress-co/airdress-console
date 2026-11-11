@@ -44,9 +44,10 @@ export interface Session {
    */
   switchTo(resource: string): Promise<void>;
   /**
-   * After a reload or a switch to another console version in this tab:
-   * start the ordinary sign-in again for the operator this tab was on, and
-   * come back to `route`. While the hub's own session lives and consent
+   * After a reload or a switch to another console version in this tab, or
+   * in a new tab of a browser that is signed in: start the ordinary sign-in
+   * again for the operator this tab (or, for a new tab, the browser's last
+   * sign-in) was on, and come back to `route`. While the hub's own session lives and consent
    * stands, the hub answers with a code and shows nothing, so the person
    * sees a redirect, not a sign-in. Tokens are still never stored (FR-13):
    * what this reads is the resume hint, the resource and nothing else.
@@ -64,6 +65,19 @@ export interface Session {
  * it; sign-out removes it.
  */
 export const RESUME_KEY = 'airdress.console.resume';
+/**
+ * The same for the whole browser, in `localStorage`, so a new tab signs in
+ * by itself: `{resource, at}`, the resource and when a sign-in last
+ * completed, never a token. Sign-out in any tab removes it.
+ */
+export const SHARED_RESUME_KEY = 'airdress.console.resume-shared';
+/**
+ * How long a new tab follows the shared hint: the hub's own session
+ * (12 h). Past it the hub would ask for a password, and a new tab should
+ * show the console's sign-in page instead of the hub's unasked. A reload of
+ * a tab that was signed in still resumes at any age.
+ */
+export const SHARED_RESUME_MAX_AGE_MS = 12 * 60 * 60 * 1000;
 /** When the last automatic resume started, so a failing one is not repeated. */
 export const RESUME_ATTEMPT_KEY = 'airdress.console.resume-attempt';
 export const RESUME_RETRY_MS = 60_000;
@@ -75,6 +89,8 @@ export interface SessionDeps {
   readonly vault: TokenVault;
   readonly queryClient: QueryClient;
   readonly storage: Storage;
+  /** Every tab's storage (`localStorage`), for [`SHARED_RESUME_KEY`]; none, and a new tab starts at sign-in. */
+  readonly shared?: Storage;
   readonly fetch: FetchLike;
   readonly navigate: (url: string) => void;
   /** Milliseconds since the epoch; a test passes its own. */
@@ -106,6 +122,24 @@ export function createSession(deps: SessionDeps): Session {
 
   function remember(forResource: string): void {
     deps.storage.setItem(RESUME_KEY, forResource);
+    deps.shared?.setItem(SHARED_RESUME_KEY, JSON.stringify({ resource: forResource, at: now() }));
+  }
+
+  /** This tab's hint, or else the browser's while it is young enough. */
+  function hint(): string | undefined {
+    const own = deps.storage.getItem(RESUME_KEY);
+    if (own !== null && own !== '') return own;
+    const raw = deps.shared?.getItem(SHARED_RESUME_KEY);
+    if (raw === null || raw === undefined) return undefined;
+    try {
+      const parsed: unknown = JSON.parse(raw);
+      if (typeof parsed !== 'object' || parsed === null) return undefined;
+      const { resource: r, at } = parsed as { resource?: unknown; at?: unknown };
+      if (typeof r !== 'string' || r === '' || typeof at !== 'number') return undefined;
+      return now() - at < SHARED_RESUME_MAX_AGE_MS ? r : undefined;
+    } catch {
+      return undefined;
+    }
   }
 
   function end(): void {
@@ -168,6 +202,7 @@ export function createSession(deps: SessionDeps): Session {
     const refreshToken = deps.vault.refreshToken();
     deps.storage.removeItem(RESUME_KEY);
     deps.storage.removeItem(RESUME_ATTEMPT_KEY);
+    deps.shared?.removeItem(SHARED_RESUME_KEY);
     end();
     if (refreshToken !== undefined) {
       try {
@@ -203,8 +238,8 @@ export function createSession(deps: SessionDeps): Session {
     },
     async resume(route) {
       if (signedIn.value) return false;
-      const forResource = deps.storage.getItem(RESUME_KEY);
-      if (forResource === null || forResource === '') return false;
+      const forResource = hint();
+      if (forResource === undefined) return false;
       const last = Number(deps.storage.getItem(RESUME_ATTEMPT_KEY));
       if (Number.isFinite(last) && last > 0 && now() - last < RESUME_RETRY_MS) return false;
       deps.storage.setItem(RESUME_ATTEMPT_KEY, String(now()));

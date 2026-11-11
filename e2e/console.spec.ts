@@ -73,7 +73,7 @@ test('signs in, lists the airdress, reads the operator, and keeps tokens and req
   expect(foreign).toEqual([]);
 });
 
-test('a reload comes back signed in, to the same area, and sign-out ends that (FR-13)', async ({
+test('a reload or a new tab comes back signed in, and sign-out ends that everywhere (FR-13)', async ({
   page,
 }) => {
   await signIn(page);
@@ -87,9 +87,12 @@ test('a reload comes back signed in, to the same area, and sign-out ends that (F
   await expect(page.getByText(OPERATOR_FQDN)).toBeVisible();
   await expect(page.getByRole('button', { name: 'Sign in', exact: true })).toHaveCount(0);
 
-  // A second tab holds its own grant; signing out in the first ends it too.
+  // A new tab signs in by itself, with a grant of its own, to the operator
+  // the browser was last on; signing out in the first tab ends it too.
   const other = await page.context().newPage();
-  await signIn(other);
+  await other.goto('/');
+  await expect(other.getByRole('heading', { name: 'Overview' })).toBeVisible();
+  await expect(other.getByTitle('Connected operator')).toHaveText(OPERATOR_FQDN);
 
   await page.getByRole('button', { name: 'Sign out' }).click();
   await expect(page.getByRole('button', { name: 'Sign in', exact: true })).toBeVisible();

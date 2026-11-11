@@ -16,6 +16,7 @@ const session = createSession({
   vault: createTokenVault(),
   queryClient,
   storage: window.sessionStorage,
+  shared: window.localStorage,
   fetch: (input, init) => window.fetch(input, init),
   navigate: (url) => {
     window.location.assign(url);
