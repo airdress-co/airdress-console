@@ -62,6 +62,22 @@ export function operatorOrigin(fqdn: string, env: ImportMetaEnv = import.meta.en
 }
 
 /** The RFC 8707 resource for an operator's API. */
+/**
+ * The zone every airdress is named in. The hub issues an operator token only
+ * for an airdress it holds, and every one of those is `<name>.a.airdr.es`,
+ * so the console's `connect-src` names this zone and nothing else
+ * (SPEC-184 FR-5, FR-17 as amended 2026-11-11). Only the end-to-end harness
+ * overrides it (`VITE_AIRDRESS_ZONE`).
+ */
+export function airdressZone(env: ImportMetaEnv = import.meta.env): string {
+  return env.VITE_AIRDRESS_ZONE ?? 'a.airdr.es';
+}
+
+/** Whether `fqdn` is a name in [`airdressZone`]. */
+export function inAirdressZone(fqdn: string, zone: string = airdressZone()): boolean {
+  return fqdn.endsWith(`.${zone}`);
+}
+
 export function operatorResource(fqdn: string): string {
   return `https://${fqdn}/v1`;
 }

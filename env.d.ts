@@ -11,6 +11,7 @@ interface ImportMetaEnv {
    * local port; a published build never sets this.
    */
   readonly VITE_E2E_OPERATOR_ORIGIN?: string;
+  readonly VITE_AIRDRESS_ZONE?: string;
 }
 
 /** The version this build is published as (vite.config.ts). */

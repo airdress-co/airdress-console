@@ -35,9 +35,12 @@ jobs:
       - run: npx playwright install --with-deps chromium firefox webkit
       - name: the operator release the API is pinned to
         run: echo "AIRDRESS_OPERATOR_BIN=$(sh e2e/fetch-operator.sh)" >> "$GITHUB_ENV"
+      # The production build under console.airdress.co's own headers
+      # (security-headers.json), Trusted Types enforced: what ships.
       - run: npm run e2e
         env:
           CI: '1'
+          E2E_BUILD: '1'
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

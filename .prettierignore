@@ -9,3 +9,4 @@ test-results
 src/vendor
 spike/results
 dist-spike
+dist-e2e

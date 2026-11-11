@@ -17,7 +17,9 @@ describe('checkOperator (FR-17)', () => {
   };
 
   it('admits an operator that names this resource, the hub and the console scope', async () => {
-    await expect(checkOperator(metadata(good), 'op.example', ISSUER)).resolves.toBeUndefined();
+    await expect(
+      checkOperator(metadata(good), 'op.example', ISSUER, 'example'),
+    ).resolves.toBeUndefined();
   });
 
   it.each([
@@ -25,20 +27,20 @@ describe('checkOperator (FR-17)', () => {
     [{ ...good, resource: 'https://other.example/v1' }, 'wrong_resource'],
     [{ ...good, scopes_supported: ['location.read'] }, 'no_console_scope'],
   ])('refuses %j as %s', async (doc, reason) => {
-    await expect(checkOperator(metadata(doc), 'op.example', ISSUER)).rejects.toEqual(
+    await expect(checkOperator(metadata(doc), 'op.example', ISSUER, 'example')).rejects.toEqual(
       new ConnectRefusedError(reason as never),
     );
   });
 
   it('refuses an operator with no document (older than the console)', async () => {
-    await expect(checkOperator(metadata({}, 404), 'op.example', ISSUER)).rejects.toEqual(
+    await expect(checkOperator(metadata({}, 404), 'op.example', ISSUER, 'example')).rejects.toEqual(
       new ConnectRefusedError('no_metadata'),
     );
   });
 
   it('says unreachable when nothing answers at all', async () => {
     const fetch = (): Promise<Response> => Promise.reject(new TypeError('Failed to fetch'));
-    await expect(checkOperator(fetch, 'op.example', ISSUER)).rejects.toEqual(
+    await expect(checkOperator(fetch, 'op.example', ISSUER, 'example')).rejects.toEqual(
       new ConnectRefusedError('unreachable'),
     );
   });
@@ -51,10 +53,25 @@ describe('checkOperator (FR-17)', () => {
         ? Promise.resolve(new Response(null))
         : Promise.reject(new TypeError('Failed to fetch'));
     };
-    await expect(checkOperator(fetch, 'op.example', ISSUER)).rejects.toEqual(
+    await expect(checkOperator(fetch, 'op.example', ISSUER, 'example')).rejects.toEqual(
       new ConnectRefusedError('not_admitted'),
     );
     expect(modes).toEqual([undefined, 'no-cors']);
+  });
+
+  it('refuses a name outside the airdress zone without asking it anything', async () => {
+    const asked: string[] = [];
+    const fetch = (url: string): Promise<Response> => {
+      asked.push(url);
+      return Promise.resolve(Response.json(good));
+    };
+    await expect(checkOperator(fetch, 'op.example', ISSUER)).rejects.toEqual(
+      new ConnectRefusedError('outside_zone'),
+    );
+    await expect(checkOperator(fetch, 'evil-a.airdr.es', ISSUER)).rejects.toEqual(
+      new ConnectRefusedError('outside_zone'),
+    );
+    expect(asked).toEqual([]);
   });
 
   it('reads the operator back out of a resource', () => {

@@ -37,6 +37,7 @@
     "submit": "Sign in and connect",
     "invalid": "Enter a host name, without https:// or a path.",
     "refused": {
+      "outside_zone": "Only an airdress can be connected: an address ending in .a.airdr.es. Airdress sign-in is not given to any other host.",
       "unreachable": "That address did not answer. Check it, and that the operator is running.",
       "not_admitted": "This operator answered, but does not admit the console. It needs operator v0.1.164 or later, with https://console.airdress.co in its cors_allowed_origins.",
       "no_metadata": "This operator does not accept the console yet. It needs operator v0.1.164 or later, connected to Airdress sign-in.",
