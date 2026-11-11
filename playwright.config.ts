@@ -36,33 +36,25 @@ if (existsSync(webkitLibs)) {
 }
 
 // E2E_BUILD=1: the production build under console.airdress.co's own security
-// headers (security-headers.json), not the dev server, which sends none. Two
-// changes, both for the harness: connect-src names the harness's servers
-// instead of account.airdress.co and the airdress zone, and the Trusted Types
-// rules that ship report-only are enforced, so a sink fails the test.
+// headers (security-headers.json), not the dev server, which sends none. One
+// change, for the harness: connect-src names the harness's servers instead
+// of account.airdress.co and the airdress zone. Trusted Types are enforced
+// as shipped, so a sink fails the test.
 const productionMode = process.env['E2E_BUILD'] === '1';
 
 function harnessHeaders(): Record<string, string> {
   const file = JSON.parse(readFileSync('security-headers.json', 'utf8')) as Record<string, string>;
-  const csp = file['Content-Security-Policy'] ?? '';
-  const trustedTypes = (file['Content-Security-Policy-Report-Only'] ?? '')
-    .split(';')
-    .map((d) => d.trim())
-    .filter((d) => d.startsWith('require-trusted-types-for') || d.startsWith('trusted-types'));
-  const enforced = csp
+  const headers: Record<string, string> = {};
+  for (const [name, value] of Object.entries(file)) {
+    if (!name.startsWith('$')) headers[name] = value;
+  }
+  headers['Content-Security-Policy'] = (file['Content-Security-Policy'] ?? '')
     .split(';')
     .map((d) => d.trim())
     .map((d) =>
       d.startsWith('connect-src') ? `connect-src 'self' ${AS_ORIGIN} ${OPERATOR_ORIGIN}` : d,
     )
-    .concat(trustedTypes)
     .join('; ');
-  const headers: Record<string, string> = {};
-  for (const [name, value] of Object.entries(file)) {
-    if (!name.startsWith('$') && name !== 'Content-Security-Policy-Report-Only')
-      headers[name] = value;
-  }
-  headers['Content-Security-Policy'] = enforced;
   return headers;
 }
 
