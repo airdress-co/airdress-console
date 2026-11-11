@@ -43,8 +43,30 @@ export interface Session {
    * leaves the session as it was; a spent grant ends it.
    */
   switchTo(resource: string): Promise<void>;
+  /**
+   * After a reload or a switch to another console version in this tab:
+   * start the ordinary sign-in again for the operator this tab was on, and
+   * come back to `route`. While the hub's own session lives and consent
+   * stands, the hub answers with a code and shows nothing, so the person
+   * sees a redirect, not a sign-in. Tokens are still never stored (FR-13):
+   * what this reads is the resume hint, the resource and nothing else.
+   * False when there is nothing to resume, a session is already held, or
+   * an attempt started less than [`RESUME_RETRY_MS`] ago (no loop when the
+   * hub cannot answer without the person).
+   */
+  resume(route: string): Promise<boolean>;
   signOut(): Promise<void>;
 }
+
+/**
+ * The operator (or the hub API) this tab last held tokens for. Not a
+ * token, and in `sessionStorage`, so it is this tab's alone and goes with
+ * it; sign-out removes it.
+ */
+export const RESUME_KEY = 'airdress.console.resume';
+/** When the last automatic resume started, so a failing one is not repeated. */
+export const RESUME_ATTEMPT_KEY = 'airdress.console.resume-attempt';
+export const RESUME_RETRY_MS = 60_000;
 
 export const SessionKey: InjectionKey<Session> = Symbol('session');
 
@@ -55,7 +77,18 @@ export interface SessionDeps {
   readonly storage: Storage;
   readonly fetch: FetchLike;
   readonly navigate: (url: string) => void;
+  /** Milliseconds since the epoch; a test passes its own. */
+  readonly now?: () => number;
+  /**
+   * Every console tab of this browser, for sign-out (a `BroadcastChannel`
+   * named [`SIGN_OUT_CHANNEL`]). Each tab holds its own grant, so signing
+   * out revokes this tab's and tells the others to forget theirs. The
+   * message carries nothing: it can only end a session, never start one.
+   */
+  readonly tabs?: Pick<BroadcastChannel, 'postMessage' | 'addEventListener'>;
 }
+
+export const SIGN_OUT_CHANNEL = 'airdress.console.sign-out';
 
 export function createSession(deps: SessionDeps): Session {
   const signedIn = ref(false);
@@ -67,6 +100,12 @@ export function createSession(deps: SessionDeps): Session {
     const run = chain.then(task, task);
     chain = run.catch(() => undefined);
     return run;
+  }
+
+  const now = deps.now ?? (() => Date.now());
+
+  function remember(forResource: string): void {
+    deps.storage.setItem(RESUME_KEY, forResource);
   }
 
   function end(): void {
@@ -116,11 +155,31 @@ export function createSession(deps: SessionDeps): Session {
       // Cached answers belonged to the previous resource's operator.
       deps.queryClient.clear();
       resource.value = target;
+      remember(target);
     });
   }
 
   deps.vault.onRefreshDue(() => {
     void refresh();
+  });
+
+  /** Forget this tab's session and its resume hint, revoking its grant. */
+  async function signOutHere(): Promise<void> {
+    const refreshToken = deps.vault.refreshToken();
+    deps.storage.removeItem(RESUME_KEY);
+    deps.storage.removeItem(RESUME_ATTEMPT_KEY);
+    end();
+    if (refreshToken !== undefined) {
+      try {
+        await revokeRefreshToken(deps.config, refreshToken, deps.fetch);
+      } catch {
+        // The token is forgotten here either way; the hub's family expires on its own.
+      }
+    }
+  }
+
+  deps.tabs?.addEventListener('message', () => {
+    void signOutHere();
   });
 
   return {
@@ -138,7 +197,25 @@ export function createSession(deps: SessionDeps): Session {
       deps.vault.hold(done.tokens, done.resource);
       signedIn.value = true;
       resource.value = done.resource;
+      remember(done.resource);
+      deps.storage.removeItem(RESUME_ATTEMPT_KEY);
       return done.returnTo;
+    },
+    async resume(route) {
+      if (signedIn.value) return false;
+      const forResource = deps.storage.getItem(RESUME_KEY);
+      if (forResource === null || forResource === '') return false;
+      const last = Number(deps.storage.getItem(RESUME_ATTEMPT_KEY));
+      if (Number.isFinite(last) && last > 0 && now() - last < RESUME_RETRY_MS) return false;
+      deps.storage.setItem(RESUME_ATTEMPT_KEY, String(now()));
+      deps.navigate(
+        await buildAuthorizeUrl(
+          deps.config,
+          { resource: forResource, returnTo: route },
+          deps.storage,
+        ),
+      );
+      return true;
     },
     async bearer() {
       const current = deps.vault.accessToken();
@@ -149,17 +226,20 @@ export function createSession(deps: SessionDeps): Session {
     switchTo,
     signedInAt: () => authTimeOf(deps.vault.accessToken()),
     async signOut() {
-      const refreshToken = deps.vault.refreshToken();
-      end();
-      if (refreshToken !== undefined) {
-        try {
-          await revokeRefreshToken(deps.config, refreshToken, deps.fetch);
-        } catch {
-          // The token is forgotten here either way; the hub's family expires on its own.
-        }
-      }
+      await signOutHere();
+      deps.tabs?.postMessage('signed-out');
     },
   };
+}
+
+/**
+ * The route a resumed sign-in comes back to: the one in the address bar,
+ * or the default when that is the connect page (the router then sends an
+ * operator session on to its overview, a hub one to choose).
+ */
+export function resumeRoute(hash: string): string {
+  const route = hash.replace(/^#/, '');
+  return route.startsWith('/') && route !== '/' ? route : '/overview';
 }
 
 /** `auth_time` from a JWT access token's payload; undefined for anything else. */

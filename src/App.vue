@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router';
 import { useSession } from '@/auth/session.ts';
@@ -22,6 +22,11 @@ void router.isReady().then(async () => {
     fqdnOf(session.resource.value) !== undefined,
   );
   if (target !== true) await router.replace(target);
+});
+
+// Signed out from another tab (or a grant the hub ended): leave the area.
+watch(session.signedIn, async (now) => {
+  if (!now && route.name !== 'connect') await router.replace({ name: 'connect' });
 });
 
 const connected = computed(() => session.signedIn.value && op.fqdn.value !== undefined);
