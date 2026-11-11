@@ -32,7 +32,7 @@ npx playwright test --project=webkit e2e/console.spec.ts   # one browser, one fi
   harness. A published build sets none of them. With `E2E_BUILD=1` it is
   instead the production build served by `vite preview` with the headers in
   `security-headers.json`, `connect-src` pointed at the harness and the
-  Trusted Types rules (report-only in production) enforced; any refusal the
+  Trusted Types rules enforced as in production; any refusal the
   browser logs fails the test. WebKit's own `<select>` asks for an inline
   stylesheet, which `style-src 'self'` refuses on any page, ours or not
   (measured on a bare page, 2026-11-11): that one message is tolerated in
