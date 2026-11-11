@@ -5,6 +5,8 @@ import {
   RESUME_ATTEMPT_KEY,
   RESUME_KEY,
   RESUME_RETRY_MS,
+  SHARED_RESUME_KEY,
+  SHARED_RESUME_MAX_AGE_MS,
   createSession,
   resumeRoute,
 } from './session.ts';
@@ -23,6 +25,7 @@ function load(clock: { t: number } = { t: 1_000_000 }) {
     vault: createTokenVault(),
     queryClient: createQueryClient(),
     storage: window.sessionStorage,
+    shared: window.localStorage,
     fetch: network.fetch,
     navigate: (url) => {
       navigations.push(url);
@@ -30,6 +33,12 @@ function load(clock: { t: number } = { t: 1_000_000 }) {
     now: () => clock.t,
   });
   return { session, network, navigations };
+}
+
+/** A new tab of the same browser: its own sessionStorage is empty. */
+function newTab(clock?: { t: number }): ReturnType<typeof load> {
+  window.sessionStorage.clear();
+  return load(clock);
 }
 
 async function answer(page: ReturnType<typeof load>): Promise<string> {
@@ -131,6 +140,58 @@ describe('resuming after a reload', () => {
     await page.session.signOut();
     expect(window.sessionStorage.getItem(RESUME_KEY)).toBeNull();
     await expect(load().session.resume('/overview')).resolves.toBe(false);
+  });
+});
+
+describe('a new tab of a signed-in browser', () => {
+  it('signs in by itself for the operator the browser was last on', async () => {
+    const clock = { t: 5_000_000 };
+    await signedInPage(clock);
+    const tab = newTab(clock);
+    await expect(tab.session.resume('/overview')).resolves.toBe(true);
+    await expect(answer(tab)).resolves.toBe('/overview');
+    const redeem = tab.network.calls.find((c) => c.url.endsWith('/oauth/token'));
+    expect(redeem?.form?.get('resource')).toBe(RESOURCE);
+  });
+
+  it('follows the last switch in any tab', async () => {
+    const page = await signedInPage();
+    await page.session.switchTo('https://other.example/v1');
+    const tab = newTab();
+    await tab.session.resume('/overview');
+    await answer(tab);
+    expect(tab.session.resource.value).toBe('https://other.example/v1');
+  });
+
+  it('starts at sign-in once the hub session would have ended', async () => {
+    const clock = { t: 5_000_000 };
+    await signedInPage(clock);
+    clock.t += SHARED_RESUME_MAX_AGE_MS;
+    const tab = newTab(clock);
+    await expect(tab.session.resume('/overview')).resolves.toBe(false);
+    expect(tab.navigations).toEqual([]);
+  });
+
+  it('keeps the resource and a time only, never a token', async () => {
+    await signedInPage();
+    const raw = window.localStorage.getItem(SHARED_RESUME_KEY) ?? '';
+    expect(Object.keys(JSON.parse(raw) as object).sort()).toEqual(['at', 'resource']);
+    expect(raw).not.toContain(ACCESS);
+    expect(raw).not.toContain(REFRESH);
+  });
+
+  it('ignores a hint it cannot read', async () => {
+    for (const bad of ['nonsense', '{}', '{"resource":"","at":1}', '{"resource":"x"}']) {
+      window.localStorage.setItem(SHARED_RESUME_KEY, bad);
+      await expect(newTab().session.resume('/overview')).resolves.toBe(false);
+    }
+  });
+
+  it('ends with sign-out in any tab', async () => {
+    const page = await signedInPage();
+    await page.session.signOut();
+    expect(window.localStorage.getItem(SHARED_RESUME_KEY)).toBeNull();
+    await expect(newTab().session.resume('/overview')).resolves.toBe(false);
   });
 });
 
